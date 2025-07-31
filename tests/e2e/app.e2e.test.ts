@@ -31,10 +31,10 @@ describe('Server Test', () => {
     });
   });
 
-  it('deve responder com status 200 OK no endpoint /health', async () => {
+  it('should respond with 200 and the correct message', async () => {
     const response = await request(BASE_URL).get('/health');
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe('OK');
+    expect(response.text).toBe('OK - API is running');
   });
 });
