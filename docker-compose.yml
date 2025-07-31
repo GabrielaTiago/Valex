@@ -1,0 +1,40 @@
+services:
+  valex-db:
+    image: postgres:15
+    container_name: valex-db-dev
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valex-api:
+    build:
+      context: .
+      target: base
+    container_name: valex-api-dev
+    command: npm run dev
+    environment:
+      - CHOKIDAR_USEPOLLING=1
+      - CHOKIDAR_INTERVAL=300
+    env_file:
+      - .env
+    ports:
+      - '${PORT}:${PORT}'
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      valex-db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
