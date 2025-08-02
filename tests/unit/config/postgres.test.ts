@@ -59,12 +59,12 @@ describe('DatabaseConnection', () => {
 
   describe('Constructor', () => {
     it('should call validate from envValidator when instantiated', async () => {
-      await import('@/config/postegres.js');
+      await import('@/config/postgres.js');
       expect(mockValidate).toHaveBeenCalledOnce();
     });
 
     it('should create a Pool with the correct configuration', async () => {
-      await import('@/config/postegres.js');
+      await import('@/config/postgres.js');
       expect(mockPool).toHaveBeenCalledWith({
         user: 'testuser',
         password: 'password',
@@ -76,7 +76,7 @@ describe('DatabaseConnection', () => {
 
     it('should add SSL configuration when NODE_ENV is production', async () => {
       setupMockEnv({ NODE_ENV: 'production' });
-      await import('@/config/postegres.js');
+      await import('@/config/postgres.js');
       expect(mockPool).toHaveBeenCalledWith(
         expect.objectContaining({
           ssl: { rejectUnauthorized: false },
@@ -88,14 +88,14 @@ describe('DatabaseConnection', () => {
       mockValidate.mockImplementation(() => {
         throw new Error('Missing required variable');
       });
-      const importPromise = import('@/config/postegres.js');
+      const importPromise = import('@/config/postgres.js');
       await expect(importPromise).rejects.toThrow('Missing required variable');
     });
   });
 
   describe('connect()', () => {
     it('should call the connect method of the pool', async () => {
-      const { DatabaseConnection } = await import('@/config/postegres.js');
+      const { DatabaseConnection } = await import('@/config/postgres.js');
       const dbConnection = new DatabaseConnection();
       await dbConnection.connect();
       expect(mockPoolConnect).toHaveBeenCalledOnce();
@@ -104,14 +104,14 @@ describe('DatabaseConnection', () => {
 
   describe('isConnectionEstablished()', () => {
     it('should return false when the class is instantiated for the first time', async () => {
-      const { DatabaseConnection } = await import('@/config/postegres.js');
+      const { DatabaseConnection } = await import('@/config/postgres.js');
       const dbConnection = new DatabaseConnection();
       expect(dbConnection.isConnectionEstablished()).toBe(false);
     });
 
     it('should return true after a successful connection', async () => {
       mockPoolConnect.mockResolvedValue(mockClient);
-      const { DatabaseConnection } = await import('@/config/postegres.js');
+      const { DatabaseConnection } = await import('@/config/postgres.js');
       const dbConnection = new DatabaseConnection();
       await dbConnection.connect();
       expect(dbConnection.isConnectionEstablished()).toBe(true);
@@ -119,7 +119,7 @@ describe('DatabaseConnection', () => {
 
     it('should return false after a connection failure', async () => {
       mockPoolConnect.mockRejectedValue(new Error('Connection failed'));
-      const { DatabaseConnection } = await import('@/config/postegres.js');
+      const { DatabaseConnection } = await import('@/config/postgres.js');
       const dbConnection = new DatabaseConnection();
       try {
         await dbConnection.connect();
@@ -132,7 +132,7 @@ describe('DatabaseConnection', () => {
 
   describe('close()', () => {
     it('should call the end method of the pool to close the connection', async () => {
-      const { DatabaseConnection } = await import('@/config/postegres.js');
+      const { DatabaseConnection } = await import('@/config/postgres.js');
       const dbConnection = new DatabaseConnection();
 
       await dbConnection.close();
