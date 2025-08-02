@@ -1,4 +1,4 @@
-import { connection } from '@/config/postegres.js';
+import { connection } from '@/config/postgres.js';
 import { mapObjectToUpdateQuery } from '@/utils/sqlUtils.js';
 
 export type TransactionTypes = 'groceries' | 'restaurant' | 'transport' | 'education' | 'health';

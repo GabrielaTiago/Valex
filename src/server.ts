@@ -1,5 +1,5 @@
 import { app } from '@/app.js';
-import { databaseConnection } from '@/config/postegres.js';
+import { databaseConnection } from '@/config/postgres.js';
 import { createServerValidator } from '@/utils/envValidator.js';
 
 const startServer = async () => {

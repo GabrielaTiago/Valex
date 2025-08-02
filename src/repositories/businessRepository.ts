@@ -1,4 +1,4 @@
-import { connection } from '@/config/postegres.js';
+import { connection } from '@/config/postgres.js';
 import { TransactionTypes } from '@/repositories/cardRepository.js';
 
 export interface Business {

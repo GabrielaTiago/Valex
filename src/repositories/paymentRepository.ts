@@ -1,4 +1,4 @@
-import { connection } from '@/config/postegres.js';
+import { connection } from '@/config/postgres.js';
 
 export interface Payment {
   id: number;
