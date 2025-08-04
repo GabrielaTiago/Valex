@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { AppError } from '@/errors/AppError.js';
 import { validateApiKey, AuthenticatedRequest } from '@/middlewares/authMiddleware.js';
 import { companyService } from '@/services/companyService.js';
 
@@ -26,34 +27,23 @@ describe('AuthMiddleware', () => {
   });
 
   describe('validateApiKey', () => {
-    it('should return 401 when x-api-key header is missing', async () => {
-      await validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.send).toHaveBeenCalledWith({ message: 'API key is required' });
+    it('should throw AppError when x-api-key header is missing', async () => {
+      await expect(validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext)).rejects.toThrow(AppError);
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 when x-api-key header is empty', async () => {
+    it('should throw AppError when x-api-key header is empty', async () => {
       mockRequest.headers = { 'x-api-key': '' };
 
-      await validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.send).toHaveBeenCalledWith({ message: 'API key is required' });
+      await expect(validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext)).rejects.toThrow(AppError);
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 when company is not found', async () => {
+    it('should throw AppError when company is not found', async () => {
       mockRequest.headers = { 'x-api-key': 'invalid-api-key' };
       vi.mocked(companyService.getCompanyByApiKey).mockRejectedValue(new Error('Company not found'));
 
-      await validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.send).toHaveBeenCalledWith({
-        message: 'Invalid API key',
-      });
+      await expect(validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext)).rejects.toThrow(AppError);
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -77,16 +67,11 @@ describe('AuthMiddleware', () => {
       expect(mockResponse.send).not.toHaveBeenCalled();
     });
 
-    it('should handle unexpected errors', async () => {
+    it('should throw AppError for unexpected errors', async () => {
       mockRequest.headers = { 'x-api-key': 'valid-api-key' };
       vi.mocked(companyService.getCompanyByApiKey).mockRejectedValue(new Error('Database connection error'));
 
-      await validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.send).toHaveBeenCalledWith({
-        message: 'Invalid API key',
-      });
+      await expect(validateApiKey(mockRequest as AuthenticatedRequest, mockResponse as Response, mockNext)).rejects.toThrow(AppError);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
