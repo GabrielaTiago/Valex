@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { AppError } from '@/errors/AppError.js';
 import { companyService } from '@/services/companyService.js';
 
 export interface AuthenticatedRequest extends Request {
@@ -13,15 +14,15 @@ export interface AuthenticatedRequest extends Request {
 export async function validateApiKey(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     const apiKey = req.headers['x-api-key'] as string;
-    if (!apiKey) return res.status(401).send({ message: 'API key is required' });
+    if (!apiKey) throw new AppError('API key is required', 'unauthorized');
 
     const company = await companyService.getCompanyByApiKey(apiKey);
-    if (!company) return res.status(401).send({ message: 'Invalid API key' });
+    if (!company) throw new AppError('Invalid API key', 'unauthorized');
     req.company = company;
 
     next();
   } catch (error) {
     console.error(error);
-    return res.status(401).send({ message: 'Invalid API key' });
+    throw new AppError('Invalid API key', 'unauthorized');
   }
 }
