@@ -6,8 +6,8 @@ export interface Company {
   apiKey?: string;
 }
 
-export async function findByApiKey(apiKey: string) {
+export async function findByApiKey(apiKey: string): Promise<Company | null> {
   const result = await connection.query<Company, [string]>(`SELECT * FROM companies WHERE "apiKey"=$1`, [apiKey]);
 
-  return result.rows[0];
+  return result.rows.length > 0 ? result.rows[0] : null;
 }
