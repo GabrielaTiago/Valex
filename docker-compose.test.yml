@@ -1,9 +1,16 @@
 services:
-  valex-api: # Sobrescreve o serviço valex-api
+  valex-db:
+    environment:
+      POSTGRES_DB: valex_test
+
+  valex-api:
     container_name: valex-api-test
-    command: npm test # O comando agora é para rodar os testes
-    volumes: # Mantém os volumes para que os testes tenham acesso ao código
+    command: npm test
+    volumes:
       - ./src:/app/src
-      - ./test:/app/test
-    environment: # Você pode sobrescrever variáveis para o ambiente de teste se necessário
-      POSTGRES_DB: tests_valex
+      - ./tests:/app/tests
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: valex_test
+      NODE_ENV: test
