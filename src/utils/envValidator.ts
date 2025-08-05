@@ -181,6 +181,13 @@ export const SERVER_ENV_SCHEMA: ValidationSchema = {
   },
 };
 
+export const API_ENV_SCHEMA: ValidationSchema = {
+  CRYPTR_SECRET: {
+    required: true,
+    type: 'string',
+  },
+};
+
 // Convenience function to create database validator
 export const createDatabaseValidator = (): EnvironmentValidator => {
   return new EnvironmentValidator(DATABASE_ENV_SCHEMA);
@@ -189,4 +196,9 @@ export const createDatabaseValidator = (): EnvironmentValidator => {
 // Convenience function to create server validator
 export const createServerValidator = (): EnvironmentValidator => {
   return new EnvironmentValidator(SERVER_ENV_SCHEMA);
+};
+
+// Convenience function to create API validator
+export const createApiValidator = (): EnvironmentValidator => {
+  return new EnvironmentValidator(API_ENV_SCHEMA);
 };
