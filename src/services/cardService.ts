@@ -1,10 +1,12 @@
 import Chance from 'chance';
 
-import * as cardRepository from '@/repositories/cardRepository.js';
-import { Company } from '@/repositories/companyRepository.js';
+import { AppError } from '@/errors/AppError.js';
+import { findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
+import { EmployeeService } from '@/services/employeeService.js';
 
 export class CardService {
   private readonly chance = new Chance();
+  private readonly employeeService = new EmployeeService();
 
   generateUniqueCardNumber(): string {
     const cardNumber = this.chance.cc();
@@ -25,7 +27,10 @@ export class CardService {
     return `${month}/${year}`;
   }
 
-  async createCard(company: Company, employeeId: number, type: string) {
+  async createCard(employeeId: number, type: TransactionTypes) {
+    await this.employeeService.getEmployeeById(employeeId);
+    await this.validateEmployeeCardExists(type, employeeId);
+
     const cardData = {
       employeeId,
       cardholderName: '',
@@ -34,10 +39,15 @@ export class CardService {
       expirationDate: this.generateExpirationDate(),
       isVirtual: false,
       isBlocked: false,
-      type: type as cardRepository.TransactionTypes,
+      type,
     };
 
-    return cardRepository.insert(cardData);
+    return insert(cardData);
+  }
+
+  async validateEmployeeCardExists(type: TransactionTypes, employeeId: number) {
+    const existingCard = await findByTypeAndEmployeeId(type, employeeId);
+    if (existingCard) throw new AppError('Employee already has a card of this type', 'conflict');
   }
 }
 
