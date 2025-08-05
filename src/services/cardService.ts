@@ -73,7 +73,7 @@ export class CardService {
       type,
     };
 
-    return insert(cardData);
+    await insert(cardData);
   }
 
   async validateEmployeeCardExists(type: TransactionTypes, employeeId: number) {
