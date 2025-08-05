@@ -41,6 +41,38 @@ describe('CardService', () => {
     });
   });
 
+  describe('generateCardHolderName()', () => {
+    it('should generate a card holder name with first and last name in uppercase', () => {
+      const cardHolderName = cardService.generateCardHolderName('John Doe');
+      expect(cardHolderName).toBe('JOHN DOE');
+    });
+
+    it('should generate a card holder name with middle name initials (3+ letters)', () => {
+      const cardHolderName = cardService.generateCardHolderName('John Doe Test');
+      expect(cardHolderName).toBe('JOHN D TEST');
+    });
+
+    it('should ignore middle names with less than 3 letters', () => {
+      const cardHolderName = cardService.generateCardHolderName('João da Silva');
+      expect(cardHolderName).toBe('JOÃO SILVA');
+    });
+
+    it('should handle multiple middle names with 3+ letters', () => {
+      const cardHolderName = cardService.generateCardHolderName('José da Silva Rodrigues');
+      expect(cardHolderName).toBe('JOSÉ S RODRIGUES');
+    });
+
+    it('should handle single name', () => {
+      const cardHolderName = cardService.generateCardHolderName('João');
+      expect(cardHolderName).toBe('JOÃO');
+    });
+
+    it('should handle names with multiple short middle names', () => {
+      const cardHolderName = cardService.generateCardHolderName('João da Silva Oliveira do Santos');
+      expect(cardHolderName).toBe('JOÃO S O SANTOS');
+    });
+  });
+
   // describe('createCard()', () => {});
 
   describe('validateEmployeeCardExists()', () => {
