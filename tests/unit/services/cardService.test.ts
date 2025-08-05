@@ -1,13 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { AppError } from '@/errors/AppError.js';
+import { findByTypeAndEmployeeId } from '@/repositories/cardRepository.js';
 import { cardService } from '@/services/cardService.js';
 
-// Mock do cardRepository
-vi.mock('@/repositories/cardRepository.js', () => ({
-  insert: vi.fn().mockResolvedValue(null),
-}));
+vi.mock('@/repositories/cardRepository.js');
 
 describe('CardService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('generateUniqueCardNumber()', () => {
     it('should generate a unique card number with only digits', () => {
       const cardNumber = cardService.generateUniqueCardNumber();
@@ -35,6 +38,36 @@ describe('CardService', () => {
       expect(expirationDate).toBeDefined();
       expect(expirationDate).toHaveLength(5);
       expect(expirationDate).toMatch(/^\d{2}\/\d{2}$/);
+    });
+  });
+
+  // describe('createCard()', () => {});
+
+  describe('validateEmployeeCardExists()', () => {
+    it('should throw an error if the employee already has a card of the same type', async () => {
+      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue({
+        id: 1,
+        employeeId: 1,
+        type: 'groceries',
+        number: '1234567890123456',
+        cardholderName: 'Test Employee',
+        securityCode: '123',
+        expirationDate: '12/25',
+        isVirtual: false,
+        isBlocked: false,
+      });
+
+      await expect(cardService.validateEmployeeCardExists('groceries', 1)).rejects.toThrow(AppError);
+      expect(findByTypeAndEmployeeId).toHaveBeenCalledWith('groceries', 1);
+      expect(findByTypeAndEmployeeId).toHaveBeenCalledOnce();
+    });
+
+    it('should not throw an error if the employee does not have a card of the same type', async () => {
+      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue(undefined);
+
+      await expect(cardService.validateEmployeeCardExists('groceries', 1)).resolves.toBeUndefined();
+      expect(findByTypeAndEmployeeId).toHaveBeenCalledWith('groceries', 1);
+      expect(findByTypeAndEmployeeId).toHaveBeenCalledOnce();
     });
   });
 });
