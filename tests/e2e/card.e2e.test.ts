@@ -69,4 +69,22 @@ describe('POST /cards', () => {
     expect(response.status).toBe(409);
     expect(response.body).toEqual({ message: 'Employee already has a card of this type' });
   });
+
+  it('should return status 422 if the request body is invalid', async () => {
+    const cardData = { employeeId: 1, type: 'invalid-type' };
+
+    const response = await request(app).post('/cards').set('x-api-key', apiKey).send(cardData);
+
+    expect(response.status).toBe(422);
+    expect(response.body).toEqual({ message: 'Type must be one of: groceries, restaurant, transport, education, health' });
+  });
+
+  it('should return status 422 if the request body is missing', async () => {
+    const cardData = {};
+
+    const response = await request(app).post('/cards').set('x-api-key', apiKey).send(cardData);
+
+    expect(response.status).toBe(422);
+    expect(response.body).toEqual({ message: 'Employee ID is required, Type is required' });
+  });
 });
