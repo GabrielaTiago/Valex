@@ -52,7 +52,7 @@ export async function findByCardDetails(number: string, cardholderName: string, 
 export async function insert(cardData: CardInsertData) {
   const { employeeId, number, cardholderName, securityCode, expirationDate, password, isVirtual, originalCardId, isBlocked, type } = cardData;
 
-  connection.query(
+  await connection.query(
     `
     INSERT INTO cards ("employeeId", number, "cardholderName", "securityCode",
       "expirationDate", password, "isVirtual", "originalCardId", "isBlocked", type)
