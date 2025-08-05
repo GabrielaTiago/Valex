@@ -27,13 +27,33 @@ export class CardService {
     return `${month}/${year}`;
   }
 
+  generateCardHolderName(name: string) {
+    const nameParts: string[] = name.split(' ').filter((part) => part.length > 0);
+
+    // single name
+    if (nameParts.length === 1) return nameParts[0].toUpperCase();
+
+    // first and last name
+    const firstName = nameParts[0].toUpperCase();
+    const lastName = nameParts[nameParts.length - 1].toUpperCase();
+
+    // middle names, excluding first and last
+    const middleNames = nameParts.slice(1, -1);
+
+    // middle names with 3+ letters
+    const middleInitials = middleNames.filter((name) => name.length >= 3).map((name) => name[0].toUpperCase());
+
+    const cardholderName = middleInitials.length > 0 ? `${firstName} ${middleInitials.join(' ')} ${lastName}` : `${firstName} ${lastName}`;
+    return cardholderName;
+  }
+
   async createCard(employeeId: number, type: TransactionTypes) {
-    await this.employeeService.getEmployeeById(employeeId);
+    const employee = await this.employeeService.getEmployeeById(employeeId);
     await this.validateEmployeeCardExists(type, employeeId);
 
     const cardData = {
       employeeId,
-      cardholderName: '',
+      cardholderName: this.generateCardHolderName(employee.fullName),
       number: this.generateUniqueCardNumber(),
       securityCode: this.generateSecurityCode(),
       expirationDate: this.generateExpirationDate(),
