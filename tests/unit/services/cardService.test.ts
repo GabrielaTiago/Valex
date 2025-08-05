@@ -22,12 +22,20 @@ describe('CardService', () => {
   });
 
   describe('generateSecurityCode()', () => {
-    it('should generate a security code with only digits', () => {
+    it('should generate an encrypted security code', () => {
+      const base64Pattern = /^[A-Za-z0-9+/=]+$/;
       const securityCode = cardService.generateSecurityCode();
 
       expect(securityCode).toBeDefined();
-      expect(securityCode).toHaveLength(3);
-      expect(securityCode).toMatch(/^\d+$/);
+      expect(securityCode).toHaveLength(198); // Cryptr encrypted string length
+      expect(securityCode).toMatch(base64Pattern);
+    });
+
+    it('should generate different encrypted codes on each call', () => {
+      const securityCode1 = cardService.generateSecurityCode();
+      const securityCode2 = cardService.generateSecurityCode();
+
+      expect(securityCode1).not.toBe(securityCode2);
     });
   });
 
