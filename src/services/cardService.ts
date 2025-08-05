@@ -1,12 +1,22 @@
+import 'dotenv/config';
 import Chance from 'chance';
+import Cryptr from 'cryptr';
 
 import { AppError } from '@/errors/AppError.js';
 import { findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
 import { EmployeeService } from '@/services/employeeService.js';
+import { createApiValidator } from '@/utils/envValidator.js';
 
 export class CardService {
   private readonly chance = new Chance();
   private readonly employeeService = new EmployeeService();
+  private readonly apiValidator = createApiValidator();
+  private readonly cryptr: Cryptr;
+
+  constructor() {
+    this.apiValidator.validate();
+    this.cryptr = new Cryptr(this.apiValidator.getString('CRYPTR_SECRET'));
+  }
 
   generateUniqueCardNumber(): string {
     const cardNumber = this.chance.cc();
@@ -15,7 +25,8 @@ export class CardService {
 
   generateSecurityCode(): string {
     const securityCode = this.chance.string({ length: 3, pool: '0123456789' });
-    return securityCode;
+    const encryptedSecurityCode = this.cryptr.encrypt(securityCode);
+    return encryptedSecurityCode;
   }
 
   generateExpirationDate(): string {
