@@ -3,6 +3,7 @@ import type { Server } from 'http';
 import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
+import { createInactiveCard } from '../factories/cardFactory.js';
 import { seedDb } from '../factories/scenarioFactory.js';
 
 import { app } from '@/app.js';
@@ -63,8 +64,8 @@ describe('Card E2E Tests', () => {
 
     it('should return status 409 if the employee already has a card of that type', async () => {
       const cardData = { employeeId: 2, type: 'restaurant' };
-      await request(app).post('/cards').set('x-api-key', apiKey).send(cardData);
 
+      await request(app).post('/cards').set('x-api-key', apiKey).send(cardData);
       const response = await request(app).post('/cards').set('x-api-key', apiKey).send(cardData);
 
       expect(response.status).toBe(409);
@@ -87,6 +88,51 @@ describe('Card E2E Tests', () => {
 
       expect(response.status).toBe(422);
       expect(response.body).toEqual({ message: 'Employee ID is required, Type is required' });
+    });
+  });
+
+  describe('POST /cards/activate', () => {
+    it('should activate a card and return status 200 for a valid request', async () => {
+      const knownSecurityCode = '123';
+      const card = await createInactiveCard(1, knownSecurityCode);
+
+      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      const response = await request(app).post('/cards/activate').send(activateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'Card activated successfully' });
+
+      const activatedCard = await connection.query('SELECT * FROM cards WHERE id = $1', [card.id]);
+      expect(activatedCard.rows[0].password).toBeDefined();
+      expect(activatedCard.rows[0].isBlocked).toBe(false);
+    });
+
+    it('should return status 404 if the card does not exist', async () => {
+      const activateData = { cardId: 999, password: '1234', securityCode: '123' };
+      const response = await request(app).post('/cards/activate').send(activateData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Card not found' });
+    });
+
+    it('should return status 422 if the request body is invalid', async () => {
+      const activateData = { cardId: 1 }; // Missing password and securityCode
+      const response = await request(app).post('/cards/activate').send(activateData);
+
+      expect(response.status).toBe(422);
+      expect(response.body).toEqual({ message: 'Password is required, Security code is required' });
+    });
+
+    it('should return status 409 if the card is already activated', async () => {
+      const knownSecurityCode = '123';
+      const card = await createInactiveCard(1, knownSecurityCode);
+      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      await request(app).post('/cards/activate').send(activateData);
+
+      const response = await request(app).post('/cards/activate').send(activateData);
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: 'Card is already active' });
     });
   });
 });
