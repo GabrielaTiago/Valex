@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AppError } from '@/errors/AppError.js';
-import { findByTypeAndEmployeeId, insert } from '@/repositories/cardRepository.js';
+import { findById, findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
 import { cardService } from '@/services/cardService.js';
 import { EmployeeService } from '@/services/employeeService.js';
 
@@ -169,6 +169,37 @@ describe('CardService', () => {
       expect(findByTypeAndEmployeeId).toHaveBeenCalledWith('groceries', 1);
       expect(findByTypeAndEmployeeId).toHaveBeenCalledOnce();
       expect(insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findCardById()', () => {
+    const cardId = 1;
+    const mockCard = {
+      id: 1,
+      employeeId: 1,
+      type: 'groceries' as TransactionTypes,
+      number: '1234567890123456',
+      cardholderName: 'Test Employee',
+      securityCode: '123',
+      expirationDate: '12/25',
+      isVirtual: false,
+      isBlocked: false,
+    };
+
+    it('should find a card by id', async () => {
+      vi.mocked(findById).mockResolvedValue(mockCard);
+
+      await expect(cardService.findCardById(cardId)).resolves.toEqual(mockCard);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
+    });
+
+    it('should throw an error if the card is not found', async () => {
+      vi.mocked(findById).mockResolvedValue(undefined);
+
+      await expect(cardService.findCardById(cardId)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
     });
   });
 });
