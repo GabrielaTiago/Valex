@@ -1,5 +1,6 @@
-import { createCardSchema } from './cardSchemas.js';
+import { activateCardSchema, createCardSchema } from './cardSchemas.js';
 
 export const SCHEMAS = {
-    createCard: createCardSchema,
+  createCard: createCardSchema,
+  activateCard: activateCardSchema,
 };
