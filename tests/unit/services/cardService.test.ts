@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AppError } from '@/errors/AppError.js';
-import { findById, findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
+import { findById, findByTypeAndEmployeeId, insert, update, TransactionTypes } from '@/repositories/cardRepository.js';
 import { CardService } from '@/services/cardService.js';
 import { EmployeeService } from '@/services/employeeService.js';
 
@@ -292,6 +292,86 @@ describe('CardService', () => {
       expect(decryptedPassword).toBe(password);
       expect(decryptedPassword).toBeTypeOf('string');
       expect(decryptedPassword).toHaveLength(4);
+    });
+  });
+
+  describe('activateCard()', () => {
+    it('should activate a card', async () => {
+      const password = '1234';
+      const securityCode = '123';
+      const encryptedSecurityCode = 'encrypted_123';
+      const card = { ...MOCK_CARD, isBlocked: true, securityCode: encryptedSecurityCode };
+
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.mocked(update).mockResolvedValue();
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(securityCode);
+
+      await expect(cardService.activateCard(card.id, password, securityCode)).resolves.toBeUndefined();
+      expect(findById).toHaveBeenCalledWith(card.id);
+      expect(findById).toHaveBeenCalledOnce();
+      expect(update).toHaveBeenCalledWith(card.id, { isBlocked: false, password: expect.any(String), securityCode });
+    });
+
+    it('should throw an error if the card is not found', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const securityCode = '123';
+
+      vi.mocked(findById).mockResolvedValue(undefined);
+
+      await expect(cardService.activateCard(cardId, password, securityCode)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the security code is invalid', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const securityCode = '123';
+      const encryptedSecurityCode = 'encrypted_123';
+      const card = { ...MOCK_CARD, securityCode: encryptedSecurityCode };
+      const invalidSecurityCode = '456';
+
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(invalidSecurityCode);
+
+      await expect(cardService.activateCard(cardId, password, securityCode)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the password is invalid', async () => {
+      const cardId = 1;
+      const password = '123';
+      const securityCode = '123';
+      const encryptedSecurityCode = 'encrypted_123';
+      const card = { ...MOCK_CARD, securityCode: encryptedSecurityCode };
+
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(securityCode);
+
+      await expect(cardService.activateCard(cardId, password, securityCode)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the card is already activated', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const securityCode = '123';
+      const encryptedPassword = cardService.encryptPassword(password);
+      const card = { ...MOCK_CARD, password: encryptedPassword };
+
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(securityCode);
+
+      await expect(cardService.activateCard(cardId, password, securityCode)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(findById).toHaveBeenCalledOnce();
+      expect(update).not.toHaveBeenCalled();
     });
   });
 });
