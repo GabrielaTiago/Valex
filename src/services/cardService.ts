@@ -20,7 +20,7 @@ export class CardService {
 
   generateUniqueCardNumber(): string {
     const cardNumber = this.chance.cc();
-    return cardNumber;
+    return cardNumber.replace(/\D/g, '').padEnd(16, '0').slice(0, 16);
   }
 
   generateSecurityCode(): string {
