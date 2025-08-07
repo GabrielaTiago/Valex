@@ -25,7 +25,7 @@ export async function find() {
   return result.rows;
 }
 
-export async function findById(id: number) {
+export async function findById(id: number): Promise<Card | undefined> {
   const result = await connection.query<Card, [number]>('SELECT * FROM cards WHERE id=$1', [id]);
 
   return result.rows[0];
