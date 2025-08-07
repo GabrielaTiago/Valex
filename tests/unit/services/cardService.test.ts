@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
-import { cardService } from '@/services/cardService.js';
+import { CardService } from '@/services/cardService.js';
 import { EmployeeService } from '@/services/employeeService.js';
 
 vi.mock('@/services/employeeService.js');
@@ -20,8 +20,13 @@ const MOCK_CARD = {
   isBlocked: false,
 };
 
+const originalEnv = process.env;
+let cardService: CardService;
+
 describe('CardService', () => {
   beforeEach(() => {
+    process.env = { ...originalEnv, CRYPTR_SECRET: 'test-secret-key-for-cryptr' };
+    cardService = new CardService();
     vi.clearAllMocks();
   });
 
@@ -263,6 +268,30 @@ describe('CardService', () => {
       const password = '1234';
 
       await expect(cardService.validateCardPassword(password)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('encryptPassword()', () => {
+    it('should encrypt the password', () => {
+      const password = '1234';
+      const encryptedPassword = cardService.encryptPassword(password);
+
+      expect(encryptedPassword).toBeDefined();
+      expect(encryptedPassword).toBeTypeOf('string');
+      expect(encryptedPassword.length).toBeGreaterThan(password.length);
+      expect(encryptedPassword).not.toBe(password);
+    });
+  });
+
+  describe('decryptPassword()', () => {
+    it('should decrypt the password', () => {
+      const password = '1234';
+      const encryptedPassword = cardService.encryptPassword(password);
+      const decryptedPassword = cardService.decryptPassword(encryptedPassword);
+
+      expect(decryptedPassword).toBe(password);
+      expect(decryptedPassword).toBeTypeOf('string');
+      expect(decryptedPassword).toHaveLength(4);
     });
   });
 });
