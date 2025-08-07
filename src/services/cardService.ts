@@ -84,9 +84,10 @@ export class CardService {
   async activateCard(cardId: number, password: string, securityCode: string) {
     const card = await this.findCardById(cardId);
     if (card.password) throw new AppError('Card is already active', 'conflict');
+    await this.validateCardPassword(password);
     await this.validateCardExpirationDate(card.expirationDate);
     await this.validateCardSecurityCode(card.securityCode, securityCode);
-    await update(cardId, { isBlocked: false, password, securityCode });
+    await update(cardId, { isBlocked: false, password: this.encryptPassword(password), securityCode });
   }
 
   async findCardById(cardId: number) {
@@ -110,6 +111,18 @@ export class CardService {
   async validateCardSecurityCode(encryptedSecurityCode: string, providedSecurityCode: string) {
     const decryptedSecurityCode = this.cryptr.decrypt(encryptedSecurityCode);
     if (decryptedSecurityCode !== providedSecurityCode) throw new AppError('Invalid security code', 'unauthorized');
+  }
+
+  async validateCardPassword(password: string) {
+    if (isNaN(Number(password)) || password.length !== 4) throw new AppError('Invalid password', 'unauthorized');
+  }
+
+  encryptPassword(password: string) {
+    return this.cryptr.encrypt(password);
+  }
+
+  decryptPassword(password: string) {
+    return this.cryptr.decrypt(password);
   }
 }
 
