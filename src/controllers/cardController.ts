@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 import { AuthenticatedRequest } from '@/middlewares/authMiddleware.js';
 import { TransactionTypes } from '@/repositories/cardRepository.js';
@@ -12,7 +12,7 @@ class CardController {
     res.status(201).send({ message: 'Card created successfully' });
   }
 
-  async activateCard(req: AuthenticatedRequest, res: Response) {
+  async activateCard(req: Request, res: Response) {
     const { cardId, password, securityCode } = req.body;
     await cardService.activateCard(cardId, password, securityCode);
     res.status(200).send({ message: 'Card activated successfully' });
