@@ -236,4 +236,23 @@ describe('CardService', () => {
       await expect(cardService.validateCardExpirationDate(expirationDate)).resolves.toBeUndefined();
     });
   });
+
+  describe('validateCardSecurityCode()', () => {
+    it('should throw an error if the security code is invalid', async () => {
+      const encryptedCode = cardService.generateSecurityCode();
+      const invalidCode = '456';
+
+      await expect(cardService.validateCardSecurityCode(encryptedCode, invalidCode)).rejects.toThrow(AppError);
+    });
+
+    it('should not throw an error if the security code is valid', async () => {
+      const originalCode = '123';
+      const mockEncryptedCode = 'encrypted_123';
+
+      vi.spyOn(cardService['cryptr'], 'encrypt').mockReturnValue(mockEncryptedCode);
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(originalCode);
+
+      await expect(cardService.validateCardSecurityCode(mockEncryptedCode, originalCode)).resolves.toBeUndefined();
+    });
+  });
 });
