@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
@@ -7,6 +7,18 @@ import { EmployeeService } from '@/services/employeeService.js';
 
 vi.mock('@/services/employeeService.js');
 vi.mock('@/repositories/cardRepository.js');
+
+const MOCK_CARD = {
+  id: 1,
+  employeeId: 1,
+  type: 'groceries' as TransactionTypes,
+  number: '1234567890123456',
+  cardholderName: 'Test Employee',
+  securityCode: '123',
+  expirationDate: '12/25',
+  isVirtual: false,
+  isBlocked: false,
+};
 
 describe('CardService', () => {
   beforeEach(() => {
@@ -85,17 +97,7 @@ describe('CardService', () => {
 
   describe('validateEmployeeCardExists()', () => {
     it('should throw an error if the employee already has a card of the same type', async () => {
-      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue({
-        id: 1,
-        employeeId: 1,
-        type: 'groceries',
-        number: '1234567890123456',
-        cardholderName: 'Test Employee',
-        securityCode: '123',
-        expirationDate: '12/25',
-        isVirtual: false,
-        isBlocked: false,
-      });
+      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue(MOCK_CARD);
 
       await expect(cardService.validateEmployeeCardExists('groceries', 1)).rejects.toThrow(AppError);
       expect(findByTypeAndEmployeeId).toHaveBeenCalledWith('groceries', 1);
@@ -174,22 +176,11 @@ describe('CardService', () => {
 
   describe('findCardById()', () => {
     const cardId = 1;
-    const mockCard = {
-      id: 1,
-      employeeId: 1,
-      type: 'groceries' as TransactionTypes,
-      number: '1234567890123456',
-      cardholderName: 'Test Employee',
-      securityCode: '123',
-      expirationDate: '12/25',
-      isVirtual: false,
-      isBlocked: false,
-    };
 
     it('should find a card by id', async () => {
-      vi.mocked(findById).mockResolvedValue(mockCard);
+      vi.mocked(findById).mockResolvedValue(MOCK_CARD);
 
-      await expect(cardService.findCardById(cardId)).resolves.toEqual(mockCard);
+      await expect(cardService.findCardById(cardId)).resolves.toEqual(MOCK_CARD);
       expect(findById).toHaveBeenCalledWith(cardId);
       expect(findById).toHaveBeenCalledOnce();
     });
@@ -200,6 +191,49 @@ describe('CardService', () => {
       await expect(cardService.findCardById(cardId)).rejects.toThrow(AppError);
       expect(findById).toHaveBeenCalledWith(cardId);
       expect(findById).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('validateCardExpirationDate()', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should throw an error if the card is expired (year is in the past)', async () => {
+      const expirationDate = '12/24';
+      const card = { ...MOCK_CARD, expirationDate };
+      const mockDate = new Date('2025-01-01T12:00:00.000Z');
+
+      vi.setSystemTime(mockDate);
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.validateCardExpirationDate(expirationDate)).rejects.toThrow(AppError);
+    });
+
+    it('should throw an error if the card is expired (month is in the past)', async () => {
+      const expirationDate = '11/24';
+      const card = { ...MOCK_CARD, expirationDate };
+      const mockDate = new Date('2024-12-01T12:00:00.000Z');
+
+      vi.setSystemTime(mockDate);
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.validateCardExpirationDate(expirationDate)).rejects.toThrow(AppError);
+    });
+
+    it('should not throw an error if the card is not expired', async () => {
+      const expirationDate = '12/25';
+      const card = { ...MOCK_CARD, expirationDate };
+      const mockDate = new Date('2024-11-01T00:00:00.000Z');
+
+      vi.setSystemTime(mockDate);
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.validateCardExpirationDate(expirationDate)).resolves.toBeUndefined();
     });
   });
 });
