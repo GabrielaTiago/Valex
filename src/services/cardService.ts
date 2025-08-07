@@ -3,7 +3,7 @@ import Chance from 'chance';
 import Cryptr from 'cryptr';
 
 import { AppError } from '@/errors/AppError.js';
-import { findByTypeAndEmployeeId, insert, TransactionTypes } from '@/repositories/cardRepository.js';
+import { findById, findByTypeAndEmployeeId, insert, TransactionTypes, update } from '@/repositories/cardRepository.js';
 import { EmployeeService } from '@/services/employeeService.js';
 import { createApiValidator } from '@/utils/envValidator.js';
 
@@ -79,6 +79,35 @@ export class CardService {
   async validateEmployeeCardExists(type: TransactionTypes, employeeId: number) {
     const existingCard = await findByTypeAndEmployeeId(type, employeeId);
     if (existingCard) throw new AppError('Employee already has a card of this type', 'conflict');
+  }
+
+  async activateCard(cardId: number, password: string, securityCode: string) {
+    const card = await this.findCardById(cardId);
+    if (card.password) throw new AppError('Card is already active', 'conflict');
+    await this.validateCardExpirationDate(card.expirationDate);
+    await this.validateCardSecurityCode(securityCode);
+    await update(cardId, { isBlocked: false, password, securityCode });
+  }
+
+  async findCardById(cardId: number) {
+    const card = await findById(cardId);
+    if (!card) throw new AppError('Card not found', 'not_found');
+    return card;
+  }
+
+  async validateCardExpirationDate(expirationDate: string) {
+    const expirationDateParts = expirationDate.split('/');
+    const month = parseInt(expirationDateParts[0]);
+    const year = parseInt(expirationDateParts[1]);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    if (year < currentYear) throw new AppError('Card is expired', 'conflict');
+    if (year === currentYear && month < currentDate.getMonth() + 1) throw new AppError('Card is expired', 'conflict');
+  }
+
+  async validateCardSecurityCode(securityCode: string) {
+    const decryptedSecurityCode = this.cryptr.decrypt(securityCode);
+    if (decryptedSecurityCode !== securityCode) throw new AppError('Invalid security code', 'unauthorized');
   }
 }
 
