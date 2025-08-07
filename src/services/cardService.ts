@@ -100,9 +100,11 @@ export class CardService {
     const month = parseInt(expirationDateParts[0]);
     const year = parseInt(expirationDateParts[1]);
     const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
+    const currentYear = currentDate.getFullYear() % 100;
+    const currentMonth = currentDate.getMonth() + 1;
+
     if (year < currentYear) throw new AppError('Card is expired', 'conflict');
-    if (year === currentYear && month < currentDate.getMonth() + 1) throw new AppError('Card is expired', 'conflict');
+    if (year === currentYear && month < currentMonth) throw new AppError('Card is expired', 'conflict');
   }
 
   async validateCardSecurityCode(securityCode: string) {
