@@ -85,7 +85,7 @@ export class CardService {
     const card = await this.findCardById(cardId);
     if (card.password) throw new AppError('Card is already active', 'conflict');
     await this.validateCardExpirationDate(card.expirationDate);
-    await this.validateCardSecurityCode(securityCode);
+    await this.validateCardSecurityCode(card.securityCode, securityCode);
     await update(cardId, { isBlocked: false, password, securityCode });
   }
 
@@ -107,9 +107,9 @@ export class CardService {
     if (year === currentYear && month < currentMonth) throw new AppError('Card is expired', 'conflict');
   }
 
-  async validateCardSecurityCode(securityCode: string) {
-    const decryptedSecurityCode = this.cryptr.decrypt(securityCode);
-    if (decryptedSecurityCode !== securityCode) throw new AppError('Invalid security code', 'unauthorized');
+  async validateCardSecurityCode(encryptedSecurityCode: string, providedSecurityCode: string) {
+    const decryptedSecurityCode = this.cryptr.decrypt(encryptedSecurityCode);
+    if (decryptedSecurityCode !== providedSecurityCode) throw new AppError('Invalid security code', 'unauthorized');
   }
 }
 
