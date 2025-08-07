@@ -155,17 +155,7 @@ describe('CardService', () => {
         email: 'john.doe@example.com',
         companyId: 1,
       });
-      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue({
-        id: 1,
-        employeeId: 1,
-        type: 'groceries',
-        number: '1234567890123456',
-        cardholderName: 'Test Employee',
-        securityCode: '123',
-        expirationDate: '12/25',
-        isVirtual: false,
-        isBlocked: false,
-      });
+      vi.mocked(findByTypeAndEmployeeId).mockResolvedValue(MOCK_CARD);
 
       await expect(cardService.createCard(1, 'groceries')).rejects.toThrow(AppError);
       expect(findByTypeAndEmployeeId).toHaveBeenCalledWith('groceries', 1);
@@ -253,6 +243,26 @@ describe('CardService', () => {
       vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValue(originalCode);
 
       await expect(cardService.validateCardSecurityCode(mockEncryptedCode, originalCode)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('validateCardPassword()', () => {
+    it('should throw an error if the password has less than 4 digits', async () => {
+      const password = '123';
+
+      await expect(cardService.validateCardPassword(password)).rejects.toThrow(AppError);
+    });
+
+    it('should throw an error if the password is not a number', async () => {
+      const password = 'test';
+
+      await expect(cardService.validateCardPassword(password)).rejects.toThrow(AppError);
+    });
+
+    it('should not throw an error if the password is valid', async () => {
+      const password = '1234';
+
+      await expect(cardService.validateCardPassword(password)).resolves.toBeUndefined();
     });
   });
 });
