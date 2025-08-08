@@ -17,6 +17,12 @@ class CardController {
     await cardService.activateCard(cardId, password, securityCode);
     res.status(200).send({ message: 'Card activated successfully' });
   }
+
+  async viewEmployeeCard(req: Request, res: Response) {
+    const { employeeId, cardId, password } = req.body;
+    const card = await cardService.viewEmployeeCard(employeeId, cardId, password);
+    res.status(200).send(card);
+  }
 }
 
 export const cardController = new CardController();
