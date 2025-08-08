@@ -68,7 +68,7 @@ export async function update(id: number, cardData: CardUpdateData) {
     offset: 2,
   });
 
-  connection.query(
+  await connection.query(
     `
     UPDATE cards
       SET ${cardColumns}
