@@ -135,4 +135,66 @@ describe('Card E2E Tests', () => {
       expect(response.body).toEqual({ message: 'Card is already active' });
     });
   });
+
+  describe('POST /cards/view', () => {
+    it('should view an employee card and return status 200 for a valid request', async () => {
+      const knownSecurityCode = '123';
+      const card = await createInactiveCard(1, knownSecurityCode);
+
+      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      await request(app).post('/cards/activate').send(activateData);
+
+      const viewData = { employeeId: 1, cardId: card.id, password: '1234' };
+      const response = await request(app).post('/cards/view').send(viewData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        cardholderName: card.cardholderName,
+        number: card.number,
+        securityCode: '123',
+        expirationDate: card.expirationDate,
+        isVirtual: card.isVirtual,
+        type: card.type,
+      });
+    });
+
+    it('should return status 404 if the employee does not exist', async () => {
+      const viewData = { employeeId: 999, cardId: 1, password: '1234' };
+      const response = await request(app).post('/cards/view').send(viewData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Employee not found' });
+    });
+
+    it('should return status 404 if the card does not exist', async () => {
+      const viewData = { employeeId: 1, cardId: 999, password: '1234' };
+      const response = await request(app).post('/cards/view').send(viewData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Card not found' });
+    });
+
+    it('should return status 403 if the card is not active', async () => {
+      const card = await createInactiveCard(1, '123');
+      const viewData = { employeeId: 1, cardId: card.id, password: '1234' };
+      const response = await request(app).post('/cards/view').send(viewData);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Card is not active' });
+    });
+
+    it('should return status 401 if the password is incorrect', async () => {
+      const knownSecurityCode = '123';
+      const card = await createInactiveCard(1, knownSecurityCode);
+
+      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      await request(app).post('/cards/activate').send(activateData);
+
+      const viewData = { employeeId: 1, cardId: card.id, password: '1235' };
+      const response = await request(app).post('/cards/view').send(viewData);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ message: 'Invalid password' });
+    });
+  });
 });
