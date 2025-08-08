@@ -317,7 +317,7 @@ describe('CardService', () => {
       await expect(cardService.activateCard(card.id, password, securityCode)).resolves.toBeUndefined();
       expect(findById).toHaveBeenCalledWith(card.id);
       expect(findById).toHaveBeenCalledOnce();
-      expect(update).toHaveBeenCalledWith(card.id, { isBlocked: false, password: expect.any(String), securityCode });
+      expect(update).toHaveBeenCalledWith(card.id, { isBlocked: false, password: expect.any(String) });
     });
 
     it('should throw an error if the card is not found', async () => {
