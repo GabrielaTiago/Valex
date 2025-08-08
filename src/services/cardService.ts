@@ -129,7 +129,7 @@ export class CardService {
     await this.employeeService.getEmployeeById(employeeId);
 
     const card = await this.findCardById(cardId);
-    if (!card.password) throw new AppError('Card is not active', 'not_found');
+    if (!card.password) throw new AppError('Card is not active', 'forbidden');
 
     if (this.decryptPassword(card.password) !== password) throw new AppError('Invalid password', 'unauthorized');
 
