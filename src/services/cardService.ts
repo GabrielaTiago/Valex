@@ -124,6 +124,24 @@ export class CardService {
   decryptPassword(password: string) {
     return this.cryptr.decrypt(password);
   }
+
+  async viewEmployeeCard(employeeId: number, cardId: number, password: string) {
+    await this.employeeService.getEmployeeById(employeeId);
+
+    const card = await this.findCardById(cardId);
+    if (!card.password) throw new AppError('Card is not active', 'not_found');
+
+    if (this.decryptPassword(card.password) !== password) throw new AppError('Invalid password', 'unauthorized');
+
+    return {
+      cardholderName: card.cardholderName,
+      number: card.number,
+      securityCode: this.cryptr.decrypt(card.securityCode),
+      expirationDate: card.expirationDate,
+      isVirtual: card.isVirtual,
+      type: card.type,
+    };
+  }
 }
 
 export const cardService = new CardService();
