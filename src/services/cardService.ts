@@ -87,7 +87,7 @@ export class CardService {
     await this.validateCardPassword(password);
     await this.validateCardExpirationDate(card.expirationDate);
     await this.validateCardSecurityCode(card.securityCode, securityCode);
-    await update(cardId, { isBlocked: false, password: this.encryptPassword(password), securityCode });
+    await update(cardId, { isBlocked: false, password: this.encryptPassword(password) });
   }
 
   async findCardById(cardId: number) {
