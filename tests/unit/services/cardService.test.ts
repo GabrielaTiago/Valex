@@ -3,10 +3,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, update, TransactionTypes } from '@/repositories/cardRepository.js';
 import { CardService } from '@/services/cardService.js';
-import { EmployeeService } from '@/services/employeeService.js';
+import { employeeService } from '@/services/employeeService.js';
 
 vi.mock('@/services/employeeService.js');
 vi.mock('@/repositories/cardRepository.js');
+
+const MOCK_EMPLOYEE = {
+  id: 1,
+  fullName: 'John Doe',
+  cpf: '12345678901',
+  email: 'john.doe@example.com',
+  companyId: 1,
+};
 
 const MOCK_CARD = {
   id: 1,
@@ -122,7 +130,7 @@ describe('CardService', () => {
     it('should create a card for an employee', async () => {
       const employee = { id: 1, fullName: 'John Doe', cpf: '12345678901', email: 'john.doe@example.com', companyId: 1 };
 
-      vi.mocked(EmployeeService.prototype.getEmployeeById).mockResolvedValue(employee);
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue(employee);
       vi.mocked(findByTypeAndEmployeeId).mockResolvedValue(undefined);
       vi.mocked(insert).mockResolvedValue();
 
@@ -143,17 +151,17 @@ describe('CardService', () => {
     });
 
     it('should throw an error if the employee does not exist', async () => {
-      vi.mocked(EmployeeService.prototype.getEmployeeById).mockRejectedValue(new AppError('Employee not found', 'not_found'));
+      vi.mocked(employeeService.getEmployeeById).mockRejectedValue(new AppError('Employee not found', 'not_found'));
 
       await expect(cardService.createCard(1, 'groceries')).rejects.toThrow(AppError);
-      expect(EmployeeService.prototype.getEmployeeById).toHaveBeenCalledWith(1);
-      expect(EmployeeService.prototype.getEmployeeById).toHaveBeenCalledOnce();
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(1);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledOnce();
       expect(findByTypeAndEmployeeId).not.toHaveBeenCalled();
       expect(insert).not.toHaveBeenCalled();
     });
 
     it('should throw an error if the employee already has a card of the same type', async () => {
-      vi.mocked(EmployeeService.prototype.getEmployeeById).mockResolvedValue({
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue({
         id: 1,
         fullName: 'John Doe',
         cpf: '12345678901',
@@ -372,6 +380,86 @@ describe('CardService', () => {
       expect(findById).toHaveBeenCalledWith(cardId);
       expect(findById).toHaveBeenCalledOnce();
       expect(update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('viewEmployeeCard()', () => {
+    it('should view an employee card', async () => {
+      const employeeId = 1;
+      const cardId = 1;
+      const password = '1234';
+      const securityCode = '123';
+      const encryptedPassword = cardService.encryptPassword(password);
+      const card = { ...MOCK_CARD, password: encryptedPassword };
+
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue(MOCK_EMPLOYEE);
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.spyOn(cardService['cryptr'], 'decrypt').mockReturnValueOnce(password).mockReturnValueOnce(securityCode);
+
+      const result = await cardService.viewEmployeeCard(employeeId, cardId, password);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(cardService['cryptr'].decrypt).toHaveBeenCalledWith(card.password);
+      expect(result).toEqual({
+        cardholderName: card.cardholderName,
+        number: card.number,
+        securityCode: securityCode,
+        expirationDate: card.expirationDate,
+        isVirtual: card.isVirtual,
+        type: card.type,
+      });
+    });
+
+    it('should throw an error if the employee does not exist', async () => {
+      const employeeId = 1;
+      const cardId = 1;
+      const password = '1234';
+
+      vi.mocked(employeeService.getEmployeeById).mockRejectedValue(new AppError('Employee not found', 'not_found'));
+
+      await expect(cardService.viewEmployeeCard(employeeId, cardId, password)).rejects.toThrow(AppError);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
+      expect(findById).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the card is not found', async () => {
+      const employeeId = 1;
+      const cardId = 1;
+      const password = '1234';
+
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue(MOCK_EMPLOYEE);
+      vi.mocked(findById).mockResolvedValue(undefined);
+
+      await expect(cardService.viewEmployeeCard(employeeId, cardId, password)).rejects.toThrow(AppError);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
+      expect(findById).toHaveBeenCalledWith(cardId);
+    });
+
+    it('should throw an error if the card is not active', async () => {
+      const employeeId = 1;
+      const cardId = 1;
+      const password = '1234';
+
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue(MOCK_EMPLOYEE);
+      vi.mocked(findById).mockResolvedValue({ ...MOCK_CARD, password: undefined });
+
+      await expect(cardService.viewEmployeeCard(employeeId, cardId, password)).rejects.toThrow(AppError);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
+      expect(findById).toHaveBeenCalledWith(cardId);
+    });
+
+    it('should throw an error if the password is invalid', async () => {
+      const employeeId = 1;
+      const cardId = 1;
+      const password = '1234';
+      const encryptedPassword = cardService.encryptPassword(password);
+
+      vi.mocked(employeeService.getEmployeeById).mockResolvedValue(MOCK_EMPLOYEE);
+      vi.mocked(findById).mockResolvedValue({ ...MOCK_CARD, password: encryptedPassword });
+
+      await expect(cardService.viewEmployeeCard(employeeId, cardId, '123')).rejects.toThrow(AppError);
+      expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
+      expect(findById).toHaveBeenCalledWith(cardId);
     });
   });
 });
