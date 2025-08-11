@@ -305,4 +305,75 @@ describe('Card E2E Tests', () => {
       expect(response.body).toEqual({ message: 'Password is required' });
     });
   });
+
+  describe('POST /cards/unblock', () => {
+    it('should unblock a card and return status 200 for a valid request', async () => {
+      const card = await cardFactory.create({ isBlocked: true, password: '1234' });
+      const unblockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'Card unblocked successfully' });
+
+      const unblockedCard = await connection.query('SELECT * FROM cards WHERE id = $1', [card.id]);
+      expect(unblockedCard.rows[0].isBlocked).toBe(false);
+    });
+
+    it('should return status 404 if the card does not exist', async () => {
+      const unblockData = { cardId: 999, password: '1234' };
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Card not found' });
+    });
+
+    it('should return status 409 if the card is not blocked', async () => {
+      const card = await cardFactory.create({ password: '1234' });
+      const unblockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: 'Card is not blocked' });
+    });
+
+    it('should return status 403 if the card is not active', async () => {
+      const card = await cardFactory.create({ isBlocked: true });
+      const unblockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Card is not active' });
+    });
+
+    it('should return status 401 if the password is incorrect', async () => {
+      const card = await cardFactory.create({ isBlocked: true, password: '1234' });
+      const unblockData = { cardId: card.id, password: '1235' };
+
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ message: 'Invalid password' });
+    });
+
+    it('should return status 409 if the card is expired', async () => {
+      const card = await cardFactory.create({ isBlocked: true, password: '1234', isExpired: true });
+      const unblockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: 'Card is expired' });
+    });
+
+    it('should return status 422 if the request body is invalid', async () => {
+      const unblockData = { cardId: 1 }; // Missing password
+      const response = await request(app).post('/cards/unblock').send(unblockData);
+
+      expect(response.status).toBe(422);
+      expect(response.body).toEqual({ message: 'Password is required' });
+    });
+  });
 });
