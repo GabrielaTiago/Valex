@@ -12,5 +12,6 @@ cardRouter.post('/activate', validateSchema(SCHEMAS.activateCard), cardControlle
 cardRouter.post('/view', validateSchema(SCHEMAS.viewCard), cardController.viewEmployeeCard.bind(cardController));
 cardRouter.get('/balance/:cardId', cardController.getBalance.bind(cardController));
 cardRouter.post('/block', validateSchema(SCHEMAS.blockCard), cardController.blockCard.bind(cardController));
+cardRouter.post('/unblock', validateSchema(SCHEMAS.blockCard), cardController.unblockCard.bind(cardController));
 
 export { cardRouter };
