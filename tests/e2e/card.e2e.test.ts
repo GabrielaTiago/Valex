@@ -1,6 +1,8 @@
 import type { Server } from 'http';
 
 import request from 'supertest';
+import { createPayment } from 'tests/factories/paymentFactory.js';
+import { createRecharge } from 'tests/factories/rechargeFactory.js';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 import { createInactiveCard } from '../factories/cardFactory.js';
@@ -195,6 +197,47 @@ describe('Card E2E Tests', () => {
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({ message: 'Invalid password' });
+    });
+  });
+
+  describe('GET /cards/balance/:cardId', () => {
+    it('should get the balance of a card and return status 200 for a valid request', async () => {
+      const card = await createInactiveCard(1, '123');
+      const recharge = await createRecharge(card.id, 100);
+      const payment = await createPayment(card.id, 50);
+
+      const response = await request(app).get(`/cards/balance/${card.id}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        balance: 50,
+        transactions: [
+          {
+            id: payment.id,
+            cardId: payment.cardId,
+            businessId: payment.businessId,
+            amount: payment.amount,
+            businessName: expect.any(String),
+            timestamp: expect.any(String),
+          },
+        ],
+        recharges: [
+          {
+            id: recharge.id,
+            cardId: recharge.cardId,
+            amount: recharge.amount,
+            timestamp: expect.any(String),
+          },
+        ],
+      });
+    });
+
+    it('should return status 404 if the card does not exist', async () => {
+      const cardId = 999;
+      const response = await request(app).get(`/cards/balance/${cardId}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Card not found' });
     });
   });
 });
