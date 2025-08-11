@@ -23,6 +23,12 @@ class CardController {
     const card = await cardService.viewEmployeeCard(employeeId, cardId, password);
     res.status(200).send(card);
   }
+
+  async getBalance(req: Request, res: Response) {
+    const { cardId } = req.params;
+    const balance = await cardService.getBalance(Number(cardId));
+    res.status(200).send(balance);
+  }
 }
 
 export const cardController = new CardController();
