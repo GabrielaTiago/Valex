@@ -10,5 +10,6 @@ const cardRouter = Router();
 cardRouter.post('/', validateApiKey, validateSchema(SCHEMAS.createCard), cardController.createCard.bind(cardController));
 cardRouter.post('/activate', validateSchema(SCHEMAS.activateCard), cardController.activateCard.bind(cardController));
 cardRouter.post('/view', validateSchema(SCHEMAS.viewCard), cardController.viewEmployeeCard.bind(cardController));
+cardRouter.get('/balance/:cardId', cardController.getBalance.bind(cardController));
 
 export { cardRouter };
