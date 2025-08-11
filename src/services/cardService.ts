@@ -178,6 +178,19 @@ export class CardService {
 
     await update(cardId, { isBlocked: true });
   }
+
+  async unblockCard(cardId: number, password: string) {
+    const card = await this.findCardById(cardId);
+    if (!card.isBlocked) throw new AppError('Card is not blocked', 'conflict');
+    if (!card.password) throw new AppError('Card is not active', 'forbidden');
+
+    await this.validateCardPassword(password);
+    if (this.decryptPassword(card.password) !== password) throw new AppError('Invalid password', 'unauthorized');
+
+    await this.validateCardExpirationDate(card.expirationDate);
+
+    await update(cardId, { isBlocked: false });
+  }
 }
 
 export const cardService = new CardService();
