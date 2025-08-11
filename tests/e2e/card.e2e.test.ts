@@ -1,7 +1,7 @@
 import type { Server } from 'http';
 
 import request from 'supertest';
-import { createActiveCard, createInactiveCard, createExpiredActiveCard } from 'tests/factories/cardFactory.js';
+import { CardFactory } from 'tests/factories/cardFactory.js';
 import { createPayment } from 'tests/factories/paymentFactory.js';
 import { createRecharge } from 'tests/factories/rechargeFactory.js';
 import { seedDb } from 'tests/factories/scenarioFactory.js';
@@ -14,6 +14,7 @@ describe('Card E2E Tests', () => {
   let server: Server;
   const PORT = 4006;
   const apiKey = 'zadKLNx.DzvOVjQH01TumGl2urPjPQSxUbf67vs0';
+  const cardFactory = new CardFactory();
 
   beforeAll(async () => {
     await databaseConnection.connect();
@@ -94,10 +95,9 @@ describe('Card E2E Tests', () => {
 
   describe('POST /cards/activate', () => {
     it('should activate a card and return status 200 for a valid request', async () => {
-      const knownSecurityCode = '123';
-      const card = await createInactiveCard(1, knownSecurityCode);
+      const card = await cardFactory.create();
 
-      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      const activateData = { cardId: card.id, password: '1234', securityCode: '123' };
       const response = await request(app).post('/cards/activate').send(activateData);
 
       expect(response.status).toBe(200);
@@ -125,9 +125,8 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 409 if the card is already activated', async () => {
-      const knownSecurityCode = '123';
-      const card = await createInactiveCard(1, knownSecurityCode);
-      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
+      const card = await cardFactory.create();
+      const activateData = { cardId: card.id, password: '1234', securityCode: '123' };
       await request(app).post('/cards/activate').send(activateData);
 
       const response = await request(app).post('/cards/activate').send(activateData);
@@ -139,13 +138,9 @@ describe('Card E2E Tests', () => {
 
   describe('POST /cards/view', () => {
     it('should view an employee card and return status 200 for a valid request', async () => {
-      const knownSecurityCode = '123';
-      const card = await createInactiveCard(1, knownSecurityCode);
-
-      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
-      await request(app).post('/cards/activate').send(activateData);
-
+      const card = await cardFactory.create({ password: '1234' });
       const viewData = { employeeId: 1, cardId: card.id, password: '1234' };
+
       const response = await request(app).post('/cards/view').send(viewData);
 
       expect(response.status).toBe(200);
@@ -161,6 +156,7 @@ describe('Card E2E Tests', () => {
 
     it('should return status 404 if the employee does not exist', async () => {
       const viewData = { employeeId: 999, cardId: 1, password: '1234' };
+
       const response = await request(app).post('/cards/view').send(viewData);
 
       expect(response.status).toBe(404);
@@ -169,6 +165,7 @@ describe('Card E2E Tests', () => {
 
     it('should return status 404 if the card does not exist', async () => {
       const viewData = { employeeId: 1, cardId: 999, password: '1234' };
+
       const response = await request(app).post('/cards/view').send(viewData);
 
       expect(response.status).toBe(404);
@@ -176,8 +173,9 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 403 if the card is not active', async () => {
-      const card = await createInactiveCard(1, '123');
+      const card = await cardFactory.create();
       const viewData = { employeeId: 1, cardId: card.id, password: '1234' };
+
       const response = await request(app).post('/cards/view').send(viewData);
 
       expect(response.status).toBe(403);
@@ -185,13 +183,9 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 401 if the password is incorrect', async () => {
-      const knownSecurityCode = '123';
-      const card = await createInactiveCard(1, knownSecurityCode);
-
-      const activateData = { cardId: card.id, password: '1234', securityCode: knownSecurityCode };
-      await request(app).post('/cards/activate').send(activateData);
-
+      const card = await cardFactory.create({ password: '1234' });
       const viewData = { employeeId: 1, cardId: card.id, password: '1235' };
+
       const response = await request(app).post('/cards/view').send(viewData);
 
       expect(response.status).toBe(401);
@@ -201,7 +195,7 @@ describe('Card E2E Tests', () => {
 
   describe('GET /cards/balance/:cardId', () => {
     it('should get the balance of a card and return status 200 for a valid request', async () => {
-      const card = await createInactiveCard(1, '123');
+      const card = await cardFactory.create({ password: '1234' });
       const recharge = await createRecharge(card.id, 100);
       const payment = await createPayment(card.id, 50);
 
@@ -242,7 +236,7 @@ describe('Card E2E Tests', () => {
 
   describe('POST /cards/block', () => {
     it('should block a card and return status 200 for a valid request', async () => {
-      const card = await createActiveCard('1234');
+      const card = await cardFactory.create({ password: '1234' });
       const blockData = { cardId: card.id, password: '1234' };
 
       const response = await request(app).post('/cards/block').send(blockData);
@@ -264,7 +258,7 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 403 if the card is not active', async () => {
-      const card = await createInactiveCard(1, '123');
+      const card = await cardFactory.create();
       const blockData = { cardId: card.id, password: '1234' };
 
       const response = await request(app).post('/cards/block').send(blockData);
@@ -274,23 +268,17 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 409 if the card is already blocked', async () => {
-      const card = await createActiveCard('1234');
+      const card = await cardFactory.create({ isBlocked: true });
       const blockData = { cardId: card.id, password: '1234' };
 
-      // Block the card (should succeed)
-      const firstResponse = await request(app).post('/cards/block').send(blockData);
-      expect(firstResponse.status).toBe(200);
-      expect(firstResponse.body).toEqual({ message: 'Card blocked successfully' });
+      const response = await request(app).post('/cards/block').send(blockData);
 
-      // Try to block the card again (should fail)
-      const secondResponse = await request(app).post('/cards/block').send(blockData);
-
-      expect(secondResponse.status).toBe(409);
-      expect(secondResponse.body).toEqual({ message: 'Card is already blocked' });
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: 'Card is already blocked' });
     });
 
     it('should return status 401 if the password is incorrect', async () => {
-      const card = await createActiveCard('1234');
+      const card = await cardFactory.create({ password: '1234' });
       const blockData = { cardId: card.id, password: '1235' };
 
       const response = await request(app).post('/cards/block').send(blockData);
@@ -300,7 +288,7 @@ describe('Card E2E Tests', () => {
     });
 
     it('should return status 409 if the card is expired', async () => {
-      const card = await createExpiredActiveCard('1234');
+      const card = await cardFactory.create({ password: '1234', isExpired: true });
       const blockData = { cardId: card.id, password: '1234' };
 
       const response = await request(app).post('/cards/block').send(blockData);
