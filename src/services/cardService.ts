@@ -5,8 +5,8 @@ import Cryptr from 'cryptr';
 import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, TransactionTypes, update } from '@/repositories/cardRepository.js';
 import { EmployeeService } from '@/services/employeeService.js';
-import { PaymentService } from '@/services/paymentService.js';
-import { RechargesService } from '@/services/rechargesService.js';
+import { paymentService } from '@/services/paymentService.js';
+import { rechargeService } from '@/services/rechargesService.js';
 import { createApiValidator } from '@/utils/envValidator.js';
 
 export class CardService {
@@ -14,8 +14,6 @@ export class CardService {
   private readonly employeeService = new EmployeeService();
   private readonly apiValidator = createApiValidator();
   private readonly cryptr: Cryptr;
-  private readonly rechargeService = new RechargesService();
-  private readonly paymentService = new PaymentService();
 
   constructor() {
     this.apiValidator.validate();
@@ -149,8 +147,8 @@ export class CardService {
 
   async getBalance(cardId: number) {
     await this.findCardById(cardId);
-    const recharges = await this.rechargeService.getRechargesByCardId(cardId);
-    const payments = await this.paymentService.getPaymentsByCardId(cardId);
+    const recharges = await rechargeService.getRechargesByCardId(cardId);
+    const payments = await paymentService.getPaymentsByCardId(cardId);
 
     const balance = this.getSum(recharges) - this.getSum(payments);
     return {
