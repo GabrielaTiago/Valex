@@ -11,5 +11,6 @@ cardRouter.post('/', validateApiKey, validateSchema(SCHEMAS.createCard), cardCon
 cardRouter.post('/activate', validateSchema(SCHEMAS.activateCard), cardController.activateCard.bind(cardController));
 cardRouter.post('/view', validateSchema(SCHEMAS.viewCard), cardController.viewEmployeeCard.bind(cardController));
 cardRouter.get('/balance/:cardId', cardController.getBalance.bind(cardController));
+cardRouter.post('/block', validateSchema(SCHEMAS.blockCard), cardController.blockCard.bind(cardController));
 
 export { cardRouter };
