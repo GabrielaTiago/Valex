@@ -35,6 +35,12 @@ class CardController {
     await cardService.blockCard(Number(cardId), password);
     res.status(200).send({ message: 'Card blocked successfully' });
   }
+
+  async unblockCard(req: Request, res: Response) {
+    const { cardId, password } = req.body;
+    await cardService.unblockCard(Number(cardId), password);
+    res.status(200).send({ message: 'Card unblocked successfully' });
+  }
 }
 
 export const cardController = new CardController();
