@@ -515,4 +515,20 @@ describe('CardService', () => {
       expect(rechargeService.getRechargesByCardId).not.toHaveBeenCalled();
     });
   });
+
+  describe('getSum()', () => {
+    it('should return the sum of the list', () => {
+      const list = [{ amount: 100 }, { amount: 200 }];
+
+      const result = cardService.getSum(list);
+
+      expect(result).toBe(300);
+    });
+
+    it('should return 0 when the list is empty', () => {
+      const list: { amount: number }[] = [];
+      const result = cardService.getSum(list);
+      expect(result).toBe(0);
+    });
+  });
 });
