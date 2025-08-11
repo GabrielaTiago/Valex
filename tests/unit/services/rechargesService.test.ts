@@ -25,14 +25,14 @@ describe('Recharges Service', () => {
       expect(rechargeRepository.findByCardId).toHaveBeenCalledWith(MOCK_CARD_ID);
       expect(rechargeRepository.findByCardId).toHaveBeenCalledOnce();
     });
-  });
 
-  it('should return a empty list when recharges are not found', async () => {
-    const mockRecharges: Recharge[] = [];
-    vi.spyOn(rechargeRepository, 'findByCardId').mockResolvedValue(mockRecharges);
+    it('should return a empty list when recharges are not found', async () => {
+      const mockRecharges: Recharge[] = [];
+      vi.spyOn(rechargeRepository, 'findByCardId').mockResolvedValue(mockRecharges);
 
-    const result = await rechargeService.getRechargesByCardId(MOCK_CARD_ID);
+      const result = await rechargeService.getRechargesByCardId(MOCK_CARD_ID);
 
-    expect(result).toEqual(mockRecharges);
+      expect(result).toEqual(mockRecharges);
+    });
   });
 });
