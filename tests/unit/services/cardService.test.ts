@@ -600,4 +600,79 @@ describe('Card Service', () => {
       expect(findById).toHaveBeenCalledWith(cardId);
     });
   });
+
+  describe('unblockCard', () => {
+    it('should unblock a card', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const card = { ...MOCK_CARD, password: cardService.encryptPassword(password), isBlocked: true };
+
+      vi.mocked(findById).mockResolvedValue(card);
+      vi.mocked(update).mockResolvedValue();
+
+      await expect(cardService.unblockCard(cardId, password)).resolves.toBeUndefined();
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).toHaveBeenCalledWith(cardId, { isBlocked: false });
+    });
+
+    it('should throw an error if the card is not found', async () => {
+      const cardId = 1;
+      const password = '1234';
+
+      vi.mocked(findById).mockResolvedValue(undefined);
+
+      await expect(cardService.unblockCard(cardId, password)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the card is not blocked', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const card = { ...MOCK_CARD, password: cardService.encryptPassword(password), isBlocked: false };
+
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.unblockCard(cardId, password)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the card is not active', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const card = { ...MOCK_CARD, password: undefined };
+
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.unblockCard(cardId, password)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the password is invalid', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const wrongPassword = '12345';
+      const card = { ...MOCK_CARD, password: cardService.encryptPassword(password) };
+
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.unblockCard(cardId, wrongPassword)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if the card is expired', async () => {
+      const cardId = 1;
+      const password = '1234';
+      const card = { ...MOCK_CARD, password: cardService.encryptPassword(password), expirationDate: '01/20' };
+
+      vi.mocked(findById).mockResolvedValue(card);
+
+      await expect(cardService.unblockCard(cardId, password)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(update).not.toHaveBeenCalled();
+    });
+  });
 });
