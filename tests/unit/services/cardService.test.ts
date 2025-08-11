@@ -4,8 +4,12 @@ import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, update, TransactionTypes } from '@/repositories/cardRepository.js';
 import { CardService } from '@/services/cardService.js';
 import { employeeService } from '@/services/employeeService.js';
+import { paymentService } from '@/services/paymentService.js';
+import { rechargeService } from '@/services/rechargesService.js';
 
 vi.mock('@/services/employeeService.js');
+vi.mock('@/services/paymentService.js');
+vi.mock('@/services/rechargesService.js');
 vi.mock('@/repositories/cardRepository.js');
 
 const MOCK_EMPLOYEE = {
@@ -460,6 +464,55 @@ describe('CardService', () => {
       await expect(cardService.viewEmployeeCard(employeeId, cardId, '123')).rejects.toThrow(AppError);
       expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
       expect(findById).toHaveBeenCalledWith(cardId);
+    });
+  });
+
+  describe('getBalance()', () => {
+    it('should get the balance of a card', async () => {
+      const cardId = 1;
+      const recharges = [
+        { amount: 100, id: 1, cardId: 1, timestamp: new Date() },
+        { amount: 200, id: 2, cardId: 1, timestamp: new Date() },
+      ];
+      const payments = [
+        { amount: 50, id: 1, cardId: 1, businessId: 1, timestamp: new Date(), businessName: 'Business 1' },
+        { amount: 30, id: 2, cardId: 1, businessId: 2, timestamp: new Date(), businessName: 'Business 2' },
+      ];
+
+      vi.mocked(findById).mockResolvedValue(MOCK_CARD);
+      vi.mocked(rechargeService.getRechargesByCardId).mockResolvedValue(recharges);
+      vi.mocked(paymentService.getPaymentsByCardId).mockResolvedValue(payments);
+
+      const result = await cardService.getBalance(cardId);
+
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(rechargeService.getRechargesByCardId).toHaveBeenCalledWith(cardId);
+      expect(paymentService.getPaymentsByCardId).toHaveBeenCalledWith(cardId);
+      expect(result).toEqual({ balance: 220, transactions: payments, recharges });
+    });
+
+    it('should return 0 when there are no recharges or payments', async () => {
+      const cardId = 1;
+
+      vi.mocked(findById).mockResolvedValue(MOCK_CARD);
+      vi.mocked(rechargeService.getRechargesByCardId).mockResolvedValue([]);
+      vi.mocked(paymentService.getPaymentsByCardId).mockResolvedValue([]);
+
+      const result = await cardService.getBalance(cardId);
+
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(result).toEqual({ balance: 0, transactions: [], recharges: [] });
+    });
+
+    it('should throw an error when the card is not found', async () => {
+      const cardId = 1;
+
+      vi.mocked(findById).mockResolvedValue(undefined);
+
+      await expect(cardService.getBalance(cardId)).rejects.toThrow(AppError);
+      expect(findById).toHaveBeenCalledWith(cardId);
+      expect(paymentService.getPaymentsByCardId).not.toHaveBeenCalled();
+      expect(rechargeService.getRechargesByCardId).not.toHaveBeenCalled();
     });
   });
 });
