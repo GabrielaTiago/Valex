@@ -1,12 +1,11 @@
 import type { Server } from 'http';
 
 import request from 'supertest';
+import { createActiveCard, createInactiveCard, createExpiredActiveCard } from 'tests/factories/cardFactory.js';
 import { createPayment } from 'tests/factories/paymentFactory.js';
 import { createRecharge } from 'tests/factories/rechargeFactory.js';
+import { seedDb } from 'tests/factories/scenarioFactory.js';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-
-import { createInactiveCard } from '../factories/cardFactory.js';
-import { seedDb } from '../factories/scenarioFactory.js';
 
 import { app } from '@/app.js';
 import { connection, databaseConnection } from '@/config/postgres.js';
@@ -238,6 +237,84 @@ describe('Card E2E Tests', () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ message: 'Card not found' });
+    });
+  });
+
+  describe('POST /cards/block', () => {
+    it('should block a card and return status 200 for a valid request', async () => {
+      const card = await createActiveCard('1234');
+      const blockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'Card blocked successfully' });
+
+      const blockedCard = await connection.query('SELECT * FROM cards WHERE id = $1', [card.id]);
+      expect(blockedCard.rows[0].isBlocked).toBe(true);
+    });
+
+    it('should return status 404 if the card does not exist', async () => {
+      const blockData = { cardId: 999, password: '1234' };
+
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'Card not found' });
+    });
+
+    it('should return status 403 if the card is not active', async () => {
+      const card = await createInactiveCard(1, '123');
+      const blockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Card is not active' });
+    });
+
+    it('should return status 409 if the card is already blocked', async () => {
+      const card = await createActiveCard('1234');
+      const blockData = { cardId: card.id, password: '1234' };
+
+      // Block the card (should succeed)
+      const firstResponse = await request(app).post('/cards/block').send(blockData);
+      expect(firstResponse.status).toBe(200);
+      expect(firstResponse.body).toEqual({ message: 'Card blocked successfully' });
+
+      // Try to block the card again (should fail)
+      const secondResponse = await request(app).post('/cards/block').send(blockData);
+
+      expect(secondResponse.status).toBe(409);
+      expect(secondResponse.body).toEqual({ message: 'Card is already blocked' });
+    });
+
+    it('should return status 401 if the password is incorrect', async () => {
+      const card = await createActiveCard('1234');
+      const blockData = { cardId: card.id, password: '1235' };
+
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ message: 'Invalid password' });
+    });
+
+    it('should return status 409 if the card is expired', async () => {
+      const card = await createExpiredActiveCard('1234');
+      const blockData = { cardId: card.id, password: '1234' };
+
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ message: 'Card is expired' });
+    });
+
+    it('should return status 422 if the request body is invalid', async () => {
+      const blockData = { cardId: 1 }; // Missing password
+      const response = await request(app).post('/cards/block').send(blockData);
+
+      expect(response.status).toBe(422);
+      expect(response.body).toEqual({ message: 'Password is required' });
     });
   });
 });
