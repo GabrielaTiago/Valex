@@ -1,78 +1,59 @@
 import { connection } from '@/config/postgres.js';
-import { type Card } from '@/repositories/cardRepository.js';
+import { type Card, type CardInsertData } from '@/repositories/cardRepository.js';
 import { cardService } from '@/services/cardService.js';
 
-/**
- * Create an inactive card directly in the database with a known security code.
- * This is useful to prepare the scenario for testing activation.
- * @param employeeId The ID of the employee to associate with the card.
- * @param securityCode The security code in plain text (e.g., '123').
- * @returns The card created in the database.
- */
-export async function createInactiveCard(employeeId: number, securityCode: string): Promise<Card> {
-  const encryptedSecurityCode = cardService.encryptPassword(securityCode);
-  const expirationDate = cardService.generateExpirationDate();
-
-  const result = await connection.query<Card>(
-    `
-      INSERT INTO cards 
-        ("employeeId", number, "cardholderName", "securityCode", "expirationDate", "isVirtual", "isBlocked", type)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `,
-    [employeeId, '1234567890123456', 'TEST EMPLOYEE', encryptedSecurityCode, expirationDate, false, false, 'groceries']
-  );
-
-  return result.rows[0];
+interface CardCreationOptions {
+  employeeId?: number;
+  password?: string;
+  isBlocked?: boolean;
+  isExpired?: boolean;
+  securityCode?: string;
 }
 
-/**
- * Create an active card directly in the database.
- * This is useful for testing activation scenarios.
- * @param employeeId The ID of the employee to associate with the card.
- * @param securityCode The security code in plain text (e.g., '123').
- * @param password The password in plain text (e.g., '1234').
- * @returns The active card created in the database.
- */
-export async function createActiveCard(password: string): Promise<Card> {
-  const encryptedSecurityCode = cardService.encryptPassword('123');
-  const encryptedPassword = cardService.encryptPassword(password);
-  const expirationDate = cardService.generateExpirationDate();
+export class CardFactory {
+  /**
+   * Create and insert a card into the database with customizable options.
+   * @param options - Define the state of the card to be created.
+   * @returns The created card.
+   */
+  async create(options: CardCreationOptions = {}): Promise<Card> {
+    const defaultOptions = {
+      employeeId: 1,
+      password: '1234',
+      isBlocked: false,
+      isExpired: false,
+      securityCode: '123',
+    };
 
-  const result = await connection.query<Card>(
-    `
-      INSERT INTO cards 
-        ("employeeId", number, "cardholderName", "securityCode", "expirationDate", "isVirtual", "isBlocked", type, password)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
-        `,
-    [1, '1234567890123456', 'TEST EMPLOYEE', encryptedSecurityCode, expirationDate, false, false, 'groceries', encryptedPassword]
-  );
+    const finalOptions = { ...defaultOptions, ...options };
 
-  return result.rows[0];
-}
+    const cardData: Partial<CardInsertData> = {
+      employeeId: finalOptions.employeeId,
+      number: '1234567890123456',
+      cardholderName: 'TEST EMPLOYEE',
+      securityCode: cardService.encryptPassword(finalOptions.securityCode),
+      expirationDate: finalOptions.isExpired ? '01/20' : cardService.generateExpirationDate(),
+      isVirtual: false,
+      isBlocked: finalOptions.isBlocked,
+      type: 'groceries',
+    };
 
-/**
- * Create an expired active card directly in the database.
- * This is useful for testing expiration scenarios.
- * @param employeeId The ID of the employee to associate with the card.
- * @param securityCode The security code in plain text (e.g., '123').
- * @param password The password in plain text (e.g., '1234').
- * @returns The expired card created in the database.
- */
-export async function createExpiredActiveCard(password: string): Promise<Card> {
-  const encryptedSecurityCode = cardService.encryptPassword('123');
-  const encryptedPassword = cardService.encryptPassword(password);
+    // Add password only if it is provided in the options
+    if (options.password) {
+      cardData.password = cardService.encryptPassword(finalOptions.password);
+    }
 
-  const result = await connection.query<Card>(
-    `
-      INSERT INTO cards 
-        ("employeeId", number, "cardholderName", "securityCode", "expirationDate", "isVirtual", "isBlocked", type, password)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
-        `,
-    [1, '1234567890123456', 'TEST EMPLOYEE', encryptedSecurityCode, '01/20', false, false, 'groceries', encryptedPassword]
-  );
+    // Build the query dynamically
+    const columns = Object.keys(cardData)
+      .map((c) => `"${c}"`)
+      .join(', ');
+    const valuesClause = Object.keys(cardData)
+      .map((_, i) => `$${i + 1}`)
+      .join(', ');
+    const values = Object.values(cardData);
 
-  return result.rows[0];
+    const result = await connection.query<Card>(`INSERT INTO cards (${columns}) VALUES (${valuesClause}) RETURNING *`, values);
+
+    return result.rows[0];
+  }
 }
