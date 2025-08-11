@@ -165,6 +165,19 @@ export class CardService {
     const sum = list.reduce((acc, item) => acc + item.amount, 0);
     return sum;
   }
+
+  async blockCard(cardId: number, password: string) {
+    const card = await this.findCardById(cardId);
+    if (card.isBlocked) throw new AppError('Card is already blocked', 'conflict');
+    if (!card.password) throw new AppError('Card is not active', 'forbidden');
+
+    await this.validateCardPassword(password);
+    if (this.decryptPassword(card.password) !== password) throw new AppError('Invalid password', 'unauthorized');
+
+    await this.validateCardExpirationDate(card.expirationDate);
+
+    await update(cardId, { isBlocked: true });
+  }
 }
 
 export const cardService = new CardService();
