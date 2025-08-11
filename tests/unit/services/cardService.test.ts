@@ -35,14 +35,14 @@ const MOCK_CARD = {
 const originalEnv = process.env;
 let cardService: CardService;
 
-describe('CardService', () => {
+describe('Card Service', () => {
   beforeEach(() => {
     process.env = { ...originalEnv, CRYPTR_SECRET: 'test-secret-key-for-cryptr' };
     cardService = new CardService();
     vi.clearAllMocks();
   });
 
-  describe('generateUniqueCardNumber()', () => {
+  describe('generateUniqueCardNumber', () => {
     it('should generate a unique card number with only digits', () => {
       const cardNumber = cardService.generateUniqueCardNumber();
 
@@ -52,7 +52,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('generateSecurityCode()', () => {
+  describe('generateSecurityCode', () => {
     it('should generate an encrypted security code', () => {
       const base64Pattern = /^[A-Za-z0-9+/=]+$/;
       const securityCode = cardService.generateSecurityCode();
@@ -70,7 +70,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('generateExpirationDate()', () => {
+  describe('generateExpirationDate', () => {
     it('should generate a expiration date 5 years from now in format MM/YY', () => {
       const expirationDate = cardService.generateExpirationDate();
 
@@ -80,7 +80,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('generateCardHolderName()', () => {
+  describe('generateCardHolderName', () => {
     it('should generate a card holder name with first and last name in uppercase', () => {
       const cardHolderName = cardService.generateCardHolderName('John Doe');
       expect(cardHolderName).toBe('JOHN DOE');
@@ -112,7 +112,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('validateEmployeeCardExists()', () => {
+  describe('validateEmployeeCardExists', () => {
     it('should throw an error if the employee already has a card of the same type', async () => {
       vi.mocked(findByTypeAndEmployeeId).mockResolvedValue(MOCK_CARD);
 
@@ -130,7 +130,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('createCard()', () => {
+  describe('createCard', () => {
     it('should create a card for an employee', async () => {
       const employee = { id: 1, fullName: 'John Doe', cpf: '12345678901', email: 'john.doe@example.com', companyId: 1 };
 
@@ -181,7 +181,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('findCardById()', () => {
+  describe('findCardById', () => {
     const cardId = 1;
 
     it('should find a card by id', async () => {
@@ -201,7 +201,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('validateCardExpirationDate()', () => {
+  describe('validateCardExpirationDate', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -244,7 +244,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('validateCardSecurityCode()', () => {
+  describe('validateCardSecurityCode', () => {
     it('should throw an error if the security code is invalid', async () => {
       const encryptedCode = cardService.generateSecurityCode();
       const invalidCode = '456';
@@ -263,7 +263,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('validateCardPassword()', () => {
+  describe('validateCardPassword', () => {
     it('should throw an error if the password has less than 4 digits', async () => {
       const password = '123';
 
@@ -283,7 +283,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('encryptPassword()', () => {
+  describe('encryptPassword', () => {
     it('should encrypt the password', () => {
       const password = '1234';
       const encryptedPassword = cardService.encryptPassword(password);
@@ -295,7 +295,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('decryptPassword()', () => {
+  describe('decryptPassword', () => {
     it('should decrypt the password', () => {
       const password = '1234';
       const encryptedPassword = cardService.encryptPassword(password);
@@ -307,7 +307,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('activateCard()', () => {
+  describe('activateCard', () => {
     it('should activate a card', async () => {
       const password = '1234';
       const securityCode = '123';
@@ -387,7 +387,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('viewEmployeeCard()', () => {
+  describe('viewEmployeeCard', () => {
     it('should view an employee card', async () => {
       const employeeId = 1;
       const cardId = 1;
@@ -467,7 +467,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('getBalance()', () => {
+  describe('getBalance', () => {
     it('should get the balance of a card', async () => {
       const cardId = 1;
       const recharges = [
@@ -516,7 +516,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('getSum()', () => {
+  describe('getSum', () => {
     it('should return the sum of the list', () => {
       const list = [{ amount: 100 }, { amount: 200 }];
 
@@ -532,7 +532,7 @@ describe('CardService', () => {
     });
   });
 
-  describe('blockCard()', () => {
+  describe('blockCard', () => {
     it('should block a card', async () => {
       const cardId = 1;
       const password = '1234';
