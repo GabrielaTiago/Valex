@@ -5,6 +5,8 @@ import Cryptr from 'cryptr';
 import { AppError } from '@/errors/AppError.js';
 import { findById, findByTypeAndEmployeeId, insert, TransactionTypes, update } from '@/repositories/cardRepository.js';
 import { EmployeeService } from '@/services/employeeService.js';
+import { PaymentService } from '@/services/paymentService.js';
+import { RechargesService } from '@/services/rechargesService.js';
 import { createApiValidator } from '@/utils/envValidator.js';
 
 export class CardService {
@@ -12,6 +14,8 @@ export class CardService {
   private readonly employeeService = new EmployeeService();
   private readonly apiValidator = createApiValidator();
   private readonly cryptr: Cryptr;
+  private readonly rechargeService = new RechargesService();
+  private readonly paymentService = new PaymentService();
 
   constructor() {
     this.apiValidator.validate();
@@ -141,6 +145,25 @@ export class CardService {
       isVirtual: card.isVirtual,
       type: card.type,
     };
+  }
+
+  async getBalance(cardId: number) {
+    await this.findCardById(cardId);
+    const recharges = await this.rechargeService.getRechargesByCardId(cardId);
+    const payments = await this.paymentService.getPaymentsByCardId(cardId);
+
+    const balance = this.getSum(recharges) - this.getSum(payments);
+    return {
+      balance,
+      transactions: payments,
+      recharges,
+    };
+  }
+
+  getSum(list: { amount: number }[]) {
+    if (list.length === 0) return 0;
+    const sum = list.reduce((acc, item) => acc + item.amount, 0);
+    return sum;
   }
 }
 
