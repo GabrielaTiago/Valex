@@ -19,7 +19,7 @@ export class PaymentService {
     await cardService.validateCardExpirationDate(card.expirationDate);
 
     const decryptedPassword = cardService.decryptPassword(card.password);
-    if (decryptedPassword !== password) throw new AppError('Invalid password', 'forbidden');
+    if (decryptedPassword !== password) throw new AppError('Invalid password', 'unauthorized');
 
     const { type: businessType } = await businessService.findBusinessById(businessId);
     if (card.type !== businessType) throw new AppError('Invalid business type', 'forbidden');
