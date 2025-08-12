@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json', 'lcov'],
-      reportsDirectory: './coverage/unit-integration',
+      reportsDirectory: './coverage/e2e',
       include: ['src/**/*.ts'],
       exclude: [
         'src/server.ts',
@@ -25,10 +25,10 @@ export default defineConfig({
       ],
       thresholds: {
         global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80,
+          branches: 70,
+          functions: 70,
+          lines: 70,
+          statements: 70,
         },
       },
       all: true,
@@ -38,7 +38,17 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
     },
-    include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+    include: ['tests/e2e/**/*.test.ts'],
+    setupFiles: ['tests/e2e/setup.e2e.ts'],
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+    sequence: {
+      shuffle: false,
+    },
   },
   resolve: {
     alias: {
