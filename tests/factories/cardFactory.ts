@@ -1,7 +1,7 @@
 import { Chance } from 'chance';
 
 import { connection } from '@/config/postgres.js';
-import { type Card, type CardInsertData } from '@/repositories/cardRepository.js';
+import { TransactionTypes, type Card, type CardInsertData } from '@/repositories/cardRepository.js';
 import { cardService } from '@/services/cardService.js';
 
 interface CardCreationOptions {
@@ -10,6 +10,7 @@ interface CardCreationOptions {
   isBlocked?: boolean;
   isExpired?: boolean;
   securityCode?: string;
+  type?: TransactionTypes;
 }
 
 export class CardFactory {
@@ -25,6 +26,7 @@ export class CardFactory {
       isBlocked: false,
       isExpired: false,
       securityCode: '123',
+      type: 'groceries',
     };
 
     const finalOptions = { ...defaultOptions, ...options };
@@ -37,7 +39,7 @@ export class CardFactory {
       expirationDate: finalOptions.isExpired ? '01/20' : cardService.generateExpirationDate(),
       isVirtual: false,
       isBlocked: finalOptions.isBlocked,
-      type: 'groceries',
+      type: finalOptions.type as TransactionTypes,
     };
 
     // Add password only if it is provided in the options
