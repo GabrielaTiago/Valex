@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { cardRouter } from '@/routers/cardRouter.js';
+import { rechargeRouter } from '@/routers/rechargeRouter.js';
 
 const router = Router();
 
@@ -10,5 +11,6 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/cards', cardRouter);
+router.use('/recharges', rechargeRouter);
 
 export { router };
