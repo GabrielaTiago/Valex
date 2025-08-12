@@ -7,7 +7,7 @@ export interface Business {
   type: TransactionTypes;
 }
 
-export async function findById(id: number) {
+export async function findById(id: number): Promise<Business | undefined> {
   const result = await connection.query<Business, [number]>('SELECT * FROM businesses WHERE id=$1', [id]);
 
   return result.rows[0];
