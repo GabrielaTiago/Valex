@@ -1,3 +1,5 @@
+import { Chance } from 'chance';
+
 import { connection } from '@/config/postgres.js';
 import { type Card, type CardInsertData } from '@/repositories/cardRepository.js';
 import { cardService } from '@/services/cardService.js';
@@ -29,7 +31,7 @@ export class CardFactory {
 
     const cardData: Partial<CardInsertData> = {
       employeeId: finalOptions.employeeId,
-      number: '1234567890123456',
+      number: new Chance().cc({ type: 'visa' }).replace(/-/g, ''),
       cardholderName: 'TEST EMPLOYEE',
       securityCode: cardService.encryptPassword(finalOptions.securityCode),
       expirationDate: finalOptions.isExpired ? '01/20' : cardService.generateExpirationDate(),
