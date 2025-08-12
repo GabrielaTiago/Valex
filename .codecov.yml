@@ -1,0 +1,36 @@
+coverage:
+  precision: 2
+  round: down
+  range: '80...100'
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 5%
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+
+comment:
+  layout: 'reach, diff, flags, files'
+  behavior: default
+  require_changes: false
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+ignore:
+  - 'src/server.ts'
+  - 'src/app.ts'
+  - 'src/config/**'
+  - 'src/types/**'
+  - 'tests/**'
+  - '**/*.test.ts'
+  - '**/*.spec.ts'
+  - '**/*.d.ts'
