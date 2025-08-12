@@ -1,36 +1,9 @@
-import type { Server } from 'http';
-
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
-import { app } from '@/app.js';
-
-let server: Server;
-const PORT = 3001;
-const BASE_URL = `http://localhost:${PORT}`;
+import { BASE_URL } from './setup.e2e.js';
 
 describe('Server Test', () => {
-  beforeAll(async () => {
-    await new Promise<void>((resolve) => {
-      server = app.listen(PORT, () => {
-        console.log(`Test server running on ${BASE_URL}`);
-        resolve();
-      });
-    });
-  });
-
-  afterAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-      server.close((err) => {
-        if (err) {
-          return reject(err);
-        }
-        console.log('Test server stopped.');
-        resolve();
-      });
-    });
-  });
-
   it('should respond with 200 and the correct message', async () => {
     const response = await request(BASE_URL).get('/health');
 
