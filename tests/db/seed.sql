@@ -1,4 +1,4 @@
-TRUNCATE TABLE companies, employees, businesses RESTART IDENTITY CASCADE;
+TRUNCATE TABLE recharges, payments, cards, businesses, employees, companies RESTART IDENTITY CASCADE;
 
 INSERT INTO companies ("id", "name", "apiKey")
 VALUES (1, 'Driven', 'zadKLNx.DzvOVjQH01TumGl2urPjPQSxUbf67vs0');
