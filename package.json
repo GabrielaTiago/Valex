@@ -20,6 +20,7 @@
     "format": "prettier --write .",
     "docker:dev": "docker-compose up --build",
     "docker:down": "docker-compose down -v --remove-orphans",
+    "docker:destroy": "docker-compose down -v --remove-orphans && docker image prune -f --filter label=com.docker.compose.project=valex",
     "docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from valex-api"
   },
   "keywords": [],
