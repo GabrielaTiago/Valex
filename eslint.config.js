@@ -30,7 +30,7 @@ export default tseslint.config(
     files: ['**/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: true,
+        project: './tsconfig.eslint.json',
       },
     },
   },
