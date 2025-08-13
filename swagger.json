@@ -1,0 +1,804 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Valex API",
+        "description": "API para gerenciamento de cartões corporativos, recargas e pagamentos da Valex.",
+        "version": "1.0.0",
+        "contact": {
+            "name": "Gabriela Tiago",
+            "email": "gabrielatiagodearaujo@outlook.com"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:4000",
+            "description": "API de Desenvolvimento"
+        }
+    ],
+    "security": [
+        {
+            "apiKeyAuth": []
+        }
+    ],
+    "paths": {
+        "/cards": {
+            "post": {
+                "summary": "Criar cartão",
+                "description": "Empresa cria um novo cartão corporativo para um funcionário",
+                "tags": [
+                    "Cards"
+                ],
+                "security": [
+                    {
+                        "apiKeyAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "employeeId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do funcionário"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "groceries",
+                                            "restaurant",
+                                            "transport",
+                                            "education",
+                                            "health"
+                                        ],
+                                        "description": "Tipo do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "employeeId",
+                                    "type"
+                                ]
+                            },
+                            "examples": {
+                                "groceries": {
+                                    "summary": "Cartão para compras",
+                                    "value": {
+                                        "employeeId": 1,
+                                        "type": "groceries"
+                                    }
+                                },
+                                "restaurant": {
+                                    "summary": "Cartão para restaurantes",
+                                    "value": {
+                                        "employeeId": 1,
+                                        "type": "restaurant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cartão criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card created successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key inválida ou ausente"
+                    },
+                    "404": {
+                        "description": "Funcionário não encontrado"
+                    },
+                    "409": {
+                        "description": "Funcionário já possui cartão deste tipo"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/cards/activate": {
+            "post": {
+                "summary": "Ativar cartão",
+                "description": "Ativa um cartão com senha e código de segurança, apenas o funcionário pode ativar o cartão",
+                "tags": [
+                    "Cards"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Senha do cartão"
+                                    },
+                                    "securityCode": {
+                                        "type": "string",
+                                        "description": "Código de segurança do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "cardId",
+                                    "password",
+                                    "securityCode"
+                                ]
+                            },
+                            "example": {
+                                "cardId": 1,
+                                "password": "1234",
+                                "securityCode": "123"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cartão ativado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card activated successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Cartão não encontrado"
+                    },
+                    "409": {
+                        "description": "Cartão já está ativo"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/cards/view": {
+            "post": {
+                "summary": "Visualizar cartão",
+                "description": "Visualiza os dados de um cartão específico, apenas o funcionário pode visualizar o cartão",
+                "tags": [
+                    "Cards"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "employeeId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do funcionário"
+                                    },
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Senha do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "employeeId",
+                                    "cardId",
+                                    "password"
+                                ]
+                            },
+                            "example": {
+                                "employeeId": 1,
+                                "cardId": 1,
+                                "password": "1234"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dados do cartão obtidos com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Card"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Senha incorreta"
+                    },
+                    "404": {
+                        "description": "Cartão ou funcionário não encontrado"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/cards/balance/{cardId}": {
+            "get": {
+                "summary": "Consultar saldo",
+                "description": "Consulta o saldo de um cartão específico, apenas o funcionário pode consultar o saldo do cartão",
+                "tags": [
+                    "Cards"
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "description": "ID do cartão"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saldo consultado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Balance"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Cartão não encontrado"
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/cards/block": {
+            "post": {
+                "summary": "Bloquear cartão",
+                "description": "Bloqueia um cartão específico, apenas o funcionário pode bloquear o cartão",
+                "tags": [
+                    "Cards"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Senha do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "cardId",
+                                    "password"
+                                ]
+                            },
+                            "example": {
+                                "cardId": 1,
+                                "password": "1234"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cartão bloqueado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card blocked successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Senha incorreta"
+                    },
+                    "404": {
+                        "description": "Cartão não encontrado"
+                    },
+                    "409": {
+                        "description": "Cartão já está bloqueado"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/cards/unblock": {
+            "post": {
+                "summary": "Desbloquear cartão",
+                "description": "Desbloqueia um cartão específico, apenas o funcionário pode desbloquear o cartão",
+                "tags": [
+                    "Cards"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Senha do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "cardId",
+                                    "password"
+                                ]
+                            },
+                            "example": {
+                                "cardId": 1,
+                                "password": "1234"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cartão desbloqueado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Card unblocked successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Senha incorreta"
+                    },
+                    "404": {
+                        "description": "Cartão não encontrado"
+                    },
+                    "409": {
+                        "description": "Cartão não está bloqueado"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/recharges": {
+            "post": {
+                "summary": "Criar recarga",
+                "description": "Cria uma nova recarga para um cartão, apenas a empresa pode criar uma recarga para um cartão",
+                "tags": [
+                    "Recharges"
+                ],
+                "security": [
+                    {
+                        "apiKeyAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 0.01,
+                                        "description": "Valor da recarga"
+                                    }
+                                },
+                                "required": [
+                                    "cardId",
+                                    "amount"
+                                ]
+                            },
+                            "example": {
+                                "cardId": 1,
+                                "amount": 100.50
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Recarga criada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recharge created successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "API Key inválida ou ausente"
+                    },
+                    "404": {
+                        "description": "Cartão não encontrado"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/payments": {
+            "post": {
+                "summary": "Criar pagamento",
+                "description": "Cria um novo pagamento usando um cartão",
+                "tags": [
+                    "Payments"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "cardId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do cartão"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 0.01,
+                                        "description": "Valor do pagamento"
+                                    },
+                                    "businessId": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "ID do estabelecimento"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "Senha do cartão"
+                                    }
+                                },
+                                "required": [
+                                    "cardId",
+                                    "amount",
+                                    "businessId",
+                                    "password"
+                                ]
+                            },
+                            "example": {
+                                "cardId": 1,
+                                "amount": 50.00,
+                                "businessId": 1,
+                                "password": "1234"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pagamento criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment created successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Senha incorreta"
+                    },
+                    "404": {
+                        "description": "Cartão ou estabelecimento não encontrado"
+                    },
+                    "409": {
+                        "description": "Cartão bloqueado ou inativo"
+                    },
+                    "422": {
+                        "description": "Erro de validação, body não enviado, parâmetros ausentes ou inválidos."
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor"
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "API Check",
+                "description": "Verifica se a API está funcionando corretamente",
+                "tags": [
+                    "Health"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API funcionando corretamente",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "OK - API is running"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Card": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "ID do cartão"
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "Número do cartão"
+                    },
+                    "cardholderName": {
+                        "type": "string",
+                        "description": "Nome do portador"
+                    },
+                    "securityCode": {
+                        "type": "string",
+                        "description": "Código de segurança"
+                    },
+                    "expirationDate": {
+                        "type": "string",
+                        "description": "Data de expiração"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Senha do cartão"
+                    },
+                    "isVirtual": {
+                        "type": "boolean",
+                        "description": "Se é um cartão virtual"
+                    },
+                    "originalCardId": {
+                        "type": "integer",
+                        "description": "ID do cartão original (para cartões virtuais)"
+                    },
+                    "isBlocked": {
+                        "type": "boolean",
+                        "description": "Se o cartão está bloqueado"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "groceries",
+                            "restaurant",
+                            "transport",
+                            "education",
+                            "health"
+                        ],
+                        "description": "Tipo do cartão"
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "cardholderName",
+                    "securityCode",
+                    "expirationDate",
+                    "password",
+                    "isVirtual",
+                    "isBlocked",
+                    "type"
+                ]
+            },
+            "Balance": {
+                "type": "object",
+                "properties": {
+                    "balance": {
+                        "type": "number",
+                        "description": "Saldo atual do cartão"
+                    },
+                    "recharges": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Recharge"
+                        },
+                        "description": "Lista de recargas"
+                    },
+                    "transactions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Payment"
+                        },
+                        "description": "Lista de transações"
+                    }
+                },
+                "required": [
+                    "balance",
+                    "recharges",
+                    "transactions"
+                ]
+            },
+            "Recharge": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "ID da recarga"
+                    },
+                    "cardId": {
+                        "type": "integer",
+                        "description": "ID do cartão"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Valor da recarga"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Data e hora da recarga"
+                    }
+                },
+                "required": [
+                    "id",
+                    "cardId",
+                    "amount",
+                    "timestamp"
+                ]
+            },
+            "Payment": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "ID do pagamento"
+                    },
+                    "cardId": {
+                        "type": "integer",
+                        "description": "ID do cartão"
+                    },
+                    "businessId": {
+                        "type": "integer",
+                        "description": "ID do estabelecimento"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Valor do pagamento"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Data e hora do pagamento"
+                    }
+                },
+                "required": [
+                    "id",
+                    "cardId",
+                    "businessId",
+                    "amount",
+                    "timestamp"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "apiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-api-key",
+                "description": "API Key para autenticação",
+                "example": "zadKLNx.DzvOVjQH01TumGl2urPjPQSxUbf67vs0"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Cards"
+        },
+        {
+            "name": "Recharges"
+        },
+        {
+            "name": "Payments"
+        },
+        {
+            "name": "Health"
+        }
+    ]
+}
