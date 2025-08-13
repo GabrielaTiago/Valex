@@ -4,12 +4,25 @@ import { AppError } from '@/errors/AppError.js';
 import { TransactionTypes } from '@/repositories/cardRepository.js';
 import { PaymentWithBusinessName } from '@/repositories/paymentRepository.js';
 import * as paymentRepository from '@/repositories/paymentRepository.js';
-import { businessService } from '@/services/busnessService.js';
+import { businessService } from '@/services/businessService.js';
 import { cardService } from '@/services/cardService.js';
 import { paymentService } from '@/services/paymentService.js';
 
-vi.mock('@/services/cardService.js');
-vi.mock('@/services/businessService.js');
+vi.mock('@/services/cardService.js', () => ({
+  cardService: {
+    findCardById: vi.fn(),
+    validateCardExpirationDate: vi.fn(),
+    decryptPassword: vi.fn(),
+    getBalance: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/businessService.js', () => ({
+  businessService: {
+    findBusinessById: vi.fn(),
+  },
+}));
+
 vi.mock('@/repositories/paymentRepository.js');
 
 const MOCK_CARD_ID = 1;
