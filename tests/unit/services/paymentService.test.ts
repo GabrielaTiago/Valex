@@ -4,7 +4,7 @@ import { AppError } from '@/errors/AppError.js';
 import { TransactionTypes } from '@/repositories/cardRepository.js';
 import { PaymentWithBusinessName } from '@/repositories/paymentRepository.js';
 import * as paymentRepository from '@/repositories/paymentRepository.js';
-import { businessService } from '@/services/businessService.js';
+import { businessService } from '@/services/busnessService.js';
 import { cardService } from '@/services/cardService.js';
 import { paymentService } from '@/services/paymentService.js';
 

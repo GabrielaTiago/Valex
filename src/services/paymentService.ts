@@ -1,6 +1,6 @@
 import { AppError } from '@/errors/AppError.js';
 import { findByCardId, insert } from '@/repositories/paymentRepository.js';
-import { businessService } from '@/services/businessService.js';
+import { businessService } from '@/services/busnessService.js';
 import { cardService } from '@/services/cardService.js';
 
 export class PaymentService {
